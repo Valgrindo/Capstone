@@ -1,0 +1,20 @@
+{
+  "config_target": "SpeechTranscriber",
+  "default_listen_time": 3,
+  "authentication": {
+    "service_account_var": "GOOGLE_APPLICATION_CREDENTIALS"
+  },
+  "recording": {
+    "default_timeout": 10,
+    "chunk": 1024,
+    "format": "paInt16",
+    "channels": 2,
+    "rate": 44100,
+    "wave_filename": "output.wav",
+    "buffer_name": "Recording"
+  },
+  "transcription": {
+    "language": "en-US",
+    "encoding": "mp3"
+  }
+}

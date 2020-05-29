@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 This program utilizes Google's Speech API to gather a voice sample from the device microphone
 and convert it to text.
@@ -7,162 +8,202 @@ and convert it to text.
 
 CS 788.01 MS Capstone Project
 """
-import msvcrt
 from typing import *
-from google.cloud import speech_v1p1beta1
-from google.cloud.speech_v1p1beta1 import enums
+import os
+import os.path
 from os import environ
 from io import open
 import uuid
-import os
-import os.path
 from time import time
 from shutil import rmtree
 import keyboard
+import json
+from collections import namedtuple
+
+from google.cloud import speech_v1p1beta1
+from google.cloud.speech_v1p1beta1 import enums
 
 import pyaudio
 import wave
 from pydub import AudioSegment
 
-DEFAULT_LISTEN_TIME = 3  # 3 seconds. TODO: Move to a dedicated Configs file?
-SERVICE_ACCOUNT_JSON = "GOOGLE_APPLICATION_CREDENTIALS"
-RECORDING_BUFFER_NAME = "Recording"
-DEFAULT_TIMEOUT = 10  # Seconds
-
-CHUNK = 1024
-FORMAT = pyaudio.paInt16
-CHANNELS = 2
-RATE = 44100
-RECORD_SECONDS = 5
-WAVE_OUTPUT_FILENAME = "output.wav"
+DEFAULT_CONFIG_NAME = 'configuration.json'
 
 
-class KeyDisabler:
+class Until:
     """
-    A small helper class that can temporarily disable a keyboard key.
+    An abstraction that makes it convenient to pass predicates to SpeechTranscriber listen() method.
     """
 
-    def start(self):
-        self.on = True
+    def __init__(self, condition: Callable[[], bool]):
+        self.__condition = condition
 
-    def stop(self):
-        self.on = False
+    def __call__(self, *args, **kwargs):
+        return self.__condition()
 
-    def __call__(self):
-        while self.on:
-            res = msvcrt.getwch()
-            x = 0
+    @staticmethod
+    def time_expires(seconds: int) -> Until:
+        """
+        Create a predicate that 'expires' after a given number of seconds elapses.
+        :param seconds: A whole number of seconds.
+        :return: An 'until' predicate
+        """
+        start = time()
+        return Until(lambda: time() - start > seconds)
 
-    def __init__(self, key: str):
-        self.on = False
-        self.target = key
 
-
-def listen(until: Callable[[], bool], timeout: int = DEFAULT_TIMEOUT):
+class SpeechTranscriber:
     """
-    Listen to a voice sample from device microphone and convert to text.
-    :param timeout: Recording timeout boundary.
-    :param until: A function that tests whether to stop recording.
-    :return: str Recognized text.
+    A mechanism for recording a user's voice and converting it to text.
     """
-    # First, start recording.
-    p = pyaudio.PyAudio()  # Create the audio stream.
-    stream = p.open(format=FORMAT,
-                    channels=CHANNELS,
-                    rate=RATE,
-                    input=True,
-                    frames_per_buffer=CHUNK)
 
-    frames = []  # Audio frame storage
-    start_time = time()
-    while not until():
-        data = stream.read(CHUNK)
-        frames.append(data)
-        now = time()
-        if (now - start_time) > timeout:
-            print(' Recording timeout.')
-            break
-
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-
-    # Create a unique temp directory and save the file there.
-    tmp_dir_name = str(uuid.uuid1())
-    full_path = f'{tmp_dir_name}\\{RECORDING_BUFFER_NAME}.mp3'
-    if not os.path.exists(tmp_dir_name):
-        os.mkdir(tmp_dir_name)
-
-        wf = wave.open(full_path.replace('.mp3', '.wav'), 'wb')
-        wf.setnchannels(CHANNELS)
-        wf.setsampwidth(p.get_sample_size(FORMAT))
-        wf.setframerate(RATE)
-        wf.writeframes(b''.join(frames))
-        wf.close()
-        del wf
-
-        # Now, convert the Wav to MP3
-        sound = AudioSegment.from_wav(full_path.replace('.mp3', '.wav'))
-        sound.export(full_path, format='mp3')
-        del sound
-    else:
-        raise SystemError('Failed to generate a unique work directory.')
-
-    # A recording file has been saved. Now, ship it away to Google.
-    client = speech_v1p1beta1.SpeechClient.from_service_account_json(environ.get(SERVICE_ACCOUNT_JSON))
-
-    # The language of the supplied audio
-    language_code = "en-US"  # TODO: Make language configurable
-
-    # Sample rate in Hertz of the audio data sent
-    sample_rate_hertz = 44100  # TODO: Make configurable.
-
-    # Encoding of audio data sent. This sample sets this explicitly.
-    # This field is optional for FLAC and WAV audio formats.
-    encoding = enums.RecognitionConfig.AudioEncoding.MP3
-    config = {
-        "language_code": language_code,
-        "sample_rate_hertz": sample_rate_hertz,
-        "encoding": encoding,
+    __audio_formats = {
+        'paInt16': pyaudio.paInt16,
+        # TODO: More?
     }
-    with open(full_path, "rb") as f:
-        content = f.read()
-    audio = {"content": content}
 
-    response = client.recognize(config, audio)
+    __audio_encodings = {
+        'mp3': enums.RecognitionConfig.AudioEncoding.MP3,
+        # TODO: More?
+    }
 
-    # TODO: Check that response was not an error.
-    # Finally, clean up the temp directory.
-    del audio, config, encoding, client
+    def __init__(self, configuration: str = None):
+        """
+        Initialize the transcriber.
+        :param configuration: A JSON configuration file. Defaults to 'configuration.json'
+        """
+        if configuration is None:
+            configuration = DEFAULT_CONFIG_NAME
+        try:
+            with open(configuration, 'r') as config_fp:
+                conf_obj = json.loads(config_fp.read())
+                if conf_obj["config_target"] != self.__class__.__name__:
+                    raise ValueError("Configuration target mismatch.")
 
-    rmtree(tmp_dir_name)
+                # Assign all the properties from configuration.
+                self.default_listen_time = conf_obj["default_listen_time"]
 
-    return response
+                self._authentication = namedtuple('authentication', ['service_account_var'])
+                self._authentication.service_account_var = conf_obj["authentication"]['service_account_var']
+
+                self._recording = namedtuple('recording', ['default_timeout', 'chunk', 'format', 'channels',
+                                                           'rate', 'wave_filename', 'buffer_name'])
+                self._recording.default_timeout = conf_obj['recording']['default_timeout']
+                self._recording.chunk = conf_obj['recording']['chunk']
+                self._recording.channels = conf_obj['recording']['channels']
+                self._recording.rate = conf_obj['recording']['rate']
+                self._recording.wave_filename = conf_obj['recording']['wave_filename']
+                self._recording.buffer_name = conf_obj['recording']['buffer_name']
+                self._recording.format = conf_obj['recording']['format']
+                self._recording.format = SpeechTranscriber.__audio_formats[conf_obj['recording']['format']]
+
+                self._transcription = namedtuple('transcription', ['language', 'encoding'])
+                self._transcription.language = conf_obj['transcription']['language']
+                self._transcription.encoding = SpeechTranscriber.__audio_encodings[conf_obj['transcription']['encoding']]
+        except FileNotFoundError:
+            print(f'File {configuration} not found.')
+        except json.JSONDecodeError:
+            print(f'Configuration file was malformed.')
+        except KeyError as ke:
+            print(f'Missing required configuration parameter: {ke}')
+
+    def listen(self, until: Until):
+        """
+        Record the system's audio until a condition is met and transcribe the voice.
+        :param until: A function that takes no arguments and returns a boolean.
+        :return: (str) A transcription of the audio.
+        """
+
+        # First, start recording.
+        p = pyaudio.PyAudio()  # Create the audio stream.
+        stream = p.open(format=self._recording.format,
+                        channels=self._recording.channels,
+                        rate=self._recording.rate,
+                        input=True,
+                        frames_per_buffer=self._recording.chunk)
+
+        frames = []  # Audio frame storage
+        start_time = time()
+        while not until():
+            data = stream.read(self._recording.chunk)
+            frames.append(data)
+            now = time()
+            if (now - start_time) > self._recording.default_timeout:
+                print(' Recording timeout.')
+                break
+        print('Recording over!')
+
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+        # Create a unique temp directory and save the file there.
+        tmp_dir_name = str(uuid.uuid1())
+        full_path = f'{tmp_dir_name}\\{self._recording.buffer_name}.mp3'
+        if not os.path.exists(tmp_dir_name):
+            os.mkdir(tmp_dir_name)
+
+            wf = wave.open(full_path.replace('.mp3', '.wav'), 'wb')
+            wf.setnchannels(self._recording.channels)
+            wf.setsampwidth(p.get_sample_size(self._recording.format))
+            wf.setframerate(self._recording.rate)
+            wf.writeframes(b''.join(frames))
+            wf.close()
+            del wf
+
+            # Now, convert the Wav to MP3
+            sound = AudioSegment.from_wav(full_path.replace('.mp3', '.wav'))
+            sound.export(full_path, format='mp3')
+            del sound
+        else:
+            raise SystemError('Failed to generate a unique work directory.')
+
+        # A recording file has been saved. Now, ship it away to Google.
+        client = speech_v1p1beta1.SpeechClient.from_service_account_json(
+            environ.get(self._authentication.service_account_var))
+
+        config = {
+            "language_code": self._transcription.language,
+            "sample_rate_hertz": self._recording.rate,
+            "encoding": self._transcription.encoding,
+        }
+        with open(full_path, "rb") as f:
+            content = f.read()
+        audio = {"content": content}
+
+        response = client.recognize(config, audio)
+
+        # TODO: Check that response was not an error.
+
+        # Finally, clean up the temp directory.
+        del audio, config, client
+        rmtree(tmp_dir_name)
+
+        return response
+
+    # This section contains several predicate factories for convenient use with listen()
 
 
 if __name__ == '__main__':
-    print(f'Press SPACEBAR to begin recording or ENTER to exit.\n> ', end='')
-    #disabler = KeyDisabler('space')
+    st = SpeechTranscriber()  # Initialize and parse configuration
+    print(f'Press SPACEBAR to begin a {st.default_listen_time}s recording or ENTER to exit.\n> ', end='')
     while True:
         try:
             if keyboard.is_pressed('enter'):
                 print('Exiting...')
                 break
             elif keyboard.is_pressed('space'):
-                #disabler.start()
-                until = lambda: not keyboard.is_pressed('space')
+                #until = Until(lambda: not keyboard.is_pressed('space'))
                 print('Recording...', end='')
                 try:
-                    text = listen(until)
+                    text = st.listen(Until.time_expires(3))
                     print(text)
                 except Exception as e:
                     print(f'Recognition error: {e}')
 
                 print(' Done!')
                 print('> ', end='')
-                #disabler.stop()
         except:
             continue  # User pressed an unrelated key.
 
     exit(0)
-
