@@ -3,6 +3,10 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/speech_recognition" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tic_tact_toe" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/integration" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/semantic_parser" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/battleship" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
