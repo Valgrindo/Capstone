@@ -47,6 +47,7 @@ if __name__ == '__main__':
 
     print(f'Parsing into AMR:\t{args.text}')
     api = TripsAPI()
-    amr_form = api.parse(args.text)
+    lf = api.parse(args.text)
 
-    print(f'Result:\n{amr_form}')
+    print(lf.pretty_format())
+
