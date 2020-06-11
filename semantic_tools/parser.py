@@ -8,7 +8,7 @@ An interface for TRIPS Web API.
 import requests
 import argparse
 
-from semantic_parser.logical_form import LogicalForm
+from semantic_tools.logical_form import LogicalForm
 
 
 class TripsAPI:

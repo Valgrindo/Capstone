@@ -40,99 +40,203 @@ class LogicalForm:
         A component of the LF tree structure.
         """
 
-        def __init__(self, comp_id: str, indicator: str = None, comp_type: str = None, word: str = None):
+        def __init__(self, comp_id: str, indicator: str = None, comp_type: str = None, word: str = None,
+                     resolved: bool = True):
             """
             Create a new LF component.
             :param indicator: The kind of logical form component: SPEECHACT, F, BARE, etc.
             :param comp_type: The specific instance of the indicator, i.e. SA_REQUEST, PERSON, etc.
             :param comp_id: The ID of this component in the form V12345
             :param word: A concrete string representing this component.
+            :param resolved: Is the component pending to be replaced by ID?
             """
             # Since Components can be concrete or ambiguous, there must be room to express the ambiguity
             self.comp_id = comp_id  # Must be unique
             self.indicator = [] if not indicator else [indicator]
             self.comp_type = [] if not comp_type else [comp_type]
-            self.word = [] if not word else [word]
+            self.word = None if not word else [word]
             self.param_mapping = {}  # Storage for parameters which may be bound by some components.
+            self._resolved = resolved
 
             # Optionally, the component may have a set of roles.
             # SPEECHACTs have a CONTENT role, a PUT has AGENT, AFFECTED, and some more.
             self.roles = [{}]  # type: List[Dict[str: List[LogicalForm.Component]]]
 
         def __str__(self):
+            """
+            Get a string representation of the component's base.
+            :return: <component [indicator1, ...] [type1, ...] {"" | * | [word1, ...]}>>
+            """
             indicators = '*' if not self.indicator else ', '.join(self.indicator)
             comp_types = '*' if not self.comp_type else ', '.join(self.comp_type)
-            words = '*' if not self.word else ', '.join(self.word)
-            return f'({indicators} {comp_types}{"" if self.word is None else f" {words}"})'
+            if self.word is None:
+                words = ''
+            elif self.word is []:
+                words = '*'
+            else:
+                words = ', '.join(self.word)
+            return f'<component {indicators} {comp_types}{"" if len(words) == 0 else f" {words}"}>'
 
         def __repr__(self):
             return self.__str__()
 
         def __hash__(self):
+            """
+            For simplicity, components are issued with unique IDs for hashing.
+            :return:
+            """
             return hash(self.comp_id)
 
         def __eq__(self, other):
             return isinstance(other, LogicalForm.Component) and self.comp_id == other.comp_id
+
+        @property
+        def resolved(self):
+            """
+            A component is considered resolved it itself and all descendants are resolved.
+            :return:
+            """
+            result = self._resolved
+            for _, rcomps in self.roles:
+                for comp in rcomps:
+                    # This being a property propagates changes upwards.
+                    result = result and comp.resolved
+
+            return result
+
+        def resolve(self, comps):
+            """
+            Look through the pieces of the component. Try to match up any unresolved ones with the given dictionary.
+            :param comps:
+            :return:
+            """
+            # If this components explicitly expects resolution
+            if not self._resolved:
+                if self.comp_id not in comps:
+                    raise CommandTemplateError(f'Cannot resolve external component ID {self.comp_id}')
+
+                # TODO: Copy over the resolver into self
+                raise NotImplementedError("Copy the data of the component resolver")
+            else:
+                # If the component does not expect explicit resolution, its children might
+                for rg in self.roles:
+                    for cs in rg.values():
+                        if not cs.resolved:
+                            cs.resolve(comps)  # TODO Double check that this actually updates the references.
 
     __component_id = 0
 
     """
     End of nested class declarations
     """
-    def __init__(self, xml_str: str = None, template_str: str = None):
+    def __init__(self, xml_str: str = None, template: Union[str, Tag] = None, require_id: bool = False):
         """
         Given an XML TRIPS parser output or a TRIPS template, process it into a convenient object.
         One of the two strings is required, but not both.
         :param xml_str: The TRIPS parser output.
-        :param template_str: The command template string.
+        :param template: The command template string OR a root BS tag.
+        :param require_id: If true, a lack of explicit ID on the component will cause an error. Only affects templates.
         """
-        if (xml_str and template_str) or (not xml_str and not template_str):
-            raise ValueError("Expected either XML string or template string, but not both.")
+        if (xml_str and template) or (not xml_str and not template):
+            raise ValueError("Expected either XML string or template, but not both.")
 
         # Root is the start of the hierarchy of Components
         self._root = None  # type: Union[LogicalForm.Component, None]
-        self._raw_data = xml_str if xml_str else template_str
+        self._require_id = require_id
+        self._resolved = False  # Are there any components with a pending from_id?
 
         if xml_str:
             self._root = LogicalForm._process_xml(xml_str)
         else:
-            self._root = LogicalForm._process_template(template_str)
+            self._root = self._process_template(template)
+
+    @property
+    def my_id(self):
+        """
+        Get an identifier of this LogicalForm, which corresponds to the ID of the root component.
+        :return:
+        """
+        return self._root.comp_id
+
+    @property
+    def resolved(self):
+        """
+        Are there any elements within the tree that expect an element by ID?
+        :return:
+        """
+        return self._root.resolved
+
+    def resolve(self, comps: Dict[str: Component]) -> NoReturn:
+        """
+        Marry any unresolved internal components with a given set.
+        :param comps: A mapping of component IDs to components.
+        :return: None
+        """
+        if self.resolved:  # No work to do.
+            return
+
+        self._root.resolve(comps)
 
     """
     Pretty Printing functionality
     """
     def pretty_format(self) -> str:
         """
-        Construct a pretty string representing the Logical Form
+        Construct a "pretty print" string representing the Logical Form.
+        It is a mix of XML and AMR notation that keeps it consistent with the XML layout while being more concise.
+        Even small trees can get a bit verbose, but this is still a helpful representation.
         :return:
         """
         return LogicalForm.__format_component(self._root, 0, set())
 
     @staticmethod
-    def __format_role(role: Tuple[str, List[Component]], depth: int, seen: Set[Component]) -> str:
+    def __format_role(role: Tuple[str, List[Union[Component, str]]], depth: int, seen: Set[Component]) -> str:
+        """
+        A helper function for pretty_format, mutually recursive with __format_component.
+        :param role: The role tuple being formatted.
+        :param depth: Nested depth level.
+        :param seen: Set of seen Components used to break potential infinite loops.
+        :return: String representation of the role.
+        """
         role_name, role_comps = role
-        result = ('|  ' * depth) + role_name + '->\n'
+        result = ('|  ' * depth) + f'<role {role_name}>\n'
         for c in role_comps:
+            # Display all of the role's components
             if isinstance(c, str):
-                result += ('|  ' * depth) + c + '\n'
+                result += ('|  ' * (depth + 1)) + c + '\n'
             else:
-                result += ('|  ' * depth) + LogicalForm.__format_component(c, depth + 1, seen)
+                result += LogicalForm.__format_component(c, depth + 1, seen)
 
         return result
 
     @staticmethod
     def __format_component(comp: Component, depth: int, seen: Set[Component]) -> str:
+        """
+        A helper function for pretty_format, mutually recursive with __format_role.
+        :param comp: The component being formatted.
+        :param depth: Nested depth level.
+        :param seen: Set of seen Components used to break potential infinite loops.
+        :return: String representation of the component.
+        """
         if comp in seen:
             return ''
-
         seen.add(comp)
-        result = ('|  ' * depth) + str(comp) + '\n'
-        for rg in comp.roles:
 
-            result += ('|  ' * depth) + '<rolegroup>\n'
+        # First, get the base of the component.
+        result = ('|  ' * depth) + str(comp) + '\n'
+        # Special case for 'closed' components with no child roles.
+        if len(comp.roles) == 1 and not comp.roles[0]:
+            return result
+
+        for rg in comp.roles:
+            # Mark the beginning of a rolegroup
+            result += ('|  ' * (depth + 1)) + '<rolegroup>\n'
+            # Now show all the roles.
             for rtup in rg.items():
-                result += ('|  ' * depth) + LogicalForm.__format_role(rtup, depth + 2, seen)
-            result += ('|  ' * depth) + '</rolegroup>\n'
+                result += LogicalForm.__format_role(rtup, depth + 2, seen)
+
+            # Mark the end of a rolegroup
+            result += ('|  ' * (depth + 1)) + '</rolegroup>\n'
 
         return result
 
@@ -148,18 +252,26 @@ class LogicalForm:
         LogicalForm.__component_id -= 1
         return LogicalForm.__component_id
 
-    @staticmethod
-    def _process_template(template_str: str) -> Component:
+    def _process_template(self, template: Union[str, Tag]) -> Component:
         """
         Convert an XML Command template to logical Form. The command templates contain branching options for component
         structure, which is captured by this function.
         Detailed documentation on the command template format is available here: TODO: Supply link
-        :param template_str: The template encoded string.
+        :param template: The template encoded string or a root <component> node.
         :return: A root component of the hierarchy.
         """
-        bs = BeautifulSoup(template_str, 'xml')
+        if isinstance(template, str):
+            bs = BeautifulSoup(template, 'xml')
+            command_root = bs.find('component')  # Find the root <component> tag.
+        else:
+            if template.name != 'component':
+                raise CommandTemplateError(f'Unexpected tag {template.name} instead of <component>')
+            command_root = template
 
-        command_root = bs.find('component')  # Find the root <component> tag.
+        if self._require_id:
+            if 'id' not in command_root.attrs:
+                raise CommandTemplateError('Missing required ID')
+
         return LogicalForm.__parse_component(command_root)
 
     @staticmethod
@@ -200,7 +312,7 @@ class LogicalForm:
         if 'from_id' in root.attrs:
             # The presence of this attribute indicates that the component is defined elsewhere.
             # Store the ID reference to be filled in externally.
-            return LogicalForm.Component(root.attrs['from_id'])
+            return LogicalForm.Component(root.attrs['from_id'], resolved=False)
 
         if 'id' in root.attrs:
             # If a programmer supplied an ID, it cannot be a negative number.
@@ -236,6 +348,9 @@ class LogicalForm:
 
         if 'word' in root.attrs:
             cmp.word = list(map(compose(str.upper, str.strip), root.attrs['word'].split(',')))
+        else:
+            # If the word tag was absent, then it's a wildcard.
+            cmp.word = []
 
         # Finally, handle the component's children.
         # The only acceptable children are <role> and <rolegroup> tags.
@@ -298,7 +413,10 @@ class LogicalForm:
                 elif c.name == 'type':
                     component.comp_type.append(c.text)
                 elif c.name == 'word':
-                    component.word.append(c.text)
+                    if component.word is None:
+                        component.word = [c.text]
+                    else:
+                        component.word.append(c.text)
                 elif c.prefix == 'role':
                     # Initialize the list if necessary
                     if c.name not in component.roles[0]:
