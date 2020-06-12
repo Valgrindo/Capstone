@@ -11,7 +11,6 @@ CS 788.01 MS Capstone Project
 from typing import *
 import os
 import os.path
-from os import environ
 from io import open
 import uuid
 from time import time
@@ -20,12 +19,14 @@ import keyboard
 import json
 from collections import namedtuple
 
-from google.cloud import speech_v1p1beta1
 from google.cloud.speech_v1p1beta1 import enums
 
 import pyaudio
 import wave
 from pydub import AudioSegment
+
+import requests
+import base64
 
 DEFAULT_CONFIG_NAME = 'configuration.json'
 
@@ -63,7 +64,7 @@ class SpeechTranscriber:
     }
 
     __audio_encodings = {
-        'mp3': enums.RecognitionConfig.AudioEncoding.MP3,
+        'mp3': enums.RecognitionConfig.AudioEncoding.MP3
         # TODO: More?
     }
 
@@ -82,9 +83,10 @@ class SpeechTranscriber:
 
                 # Assign all the properties from configuration.
                 self.default_listen_time = conf_obj["default_listen_time"]
+                self.url = conf_obj["URL"]
 
-                self._authentication = namedtuple('authentication', ['service_account_var'])
-                self._authentication.service_account_var = conf_obj["authentication"]['service_account_var']
+                self._authentication = namedtuple('authentication', ['service_account_var', 'api_key'])
+                self._authentication.api_key = conf_obj["authentication"]['API_KEY']
 
                 self._recording = namedtuple('recording', ['default_timeout', 'chunk', 'format', 'channels',
                                                            'rate', 'wave_filename', 'buffer_name'])
@@ -159,8 +161,8 @@ class SpeechTranscriber:
             raise SystemError('Failed to generate a unique work directory.')
 
         # A recording file has been saved. Now, ship it away to Google.
-        client = speech_v1p1beta1.SpeechClient.from_service_account_json(
-            environ.get(self._authentication.service_account_var))
+        # client = speech_v1p1beta1.SpeechClient.from_service_account_json(
+        #     environ.get(self._authentication.service_account_var))
 
         config = {
             "language_code": self._transcription.language,
@@ -169,17 +171,20 @@ class SpeechTranscriber:
         }
         with open(full_path, "rb") as f:
             content = f.read()
-        audio = {"content": content}
 
-        response = client.recognize(config, audio)
+        content_str = base64.b64encode(content).decode('utf-8')
+        data = {'config': config, 'audio': {'content': content_str}}
+
+        response = requests.post(f'{self.url}?key={self._authentication.api_key}', data=json.dumps(data))
+        result = json.loads(response.text)
 
         # TODO: Check that response was not an error.
 
         # Finally, clean up the temp directory.
-        del audio, config, client
+        del config
         rmtree(tmp_dir_name)
 
-        return response
+        return result
 
     # This section contains several predicate factories for convenient use with listen()
 

@@ -1,8 +1,10 @@
 {
   "config_target": "SpeechTranscriber",
   "default_listen_time": 3,
+  "URL": "https://speech.googleapis.com/v1/speech:recognize",
   "authentication": {
-    "service_account_var": "GOOGLE_APPLICATION_CREDENTIALS"
+    "service_account_var": "GOOGLE_APPLICATION_CREDENTIALS",
+    "API_KEY": "AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA"
   },
   "recording": {
     "default_timeout": 10,
