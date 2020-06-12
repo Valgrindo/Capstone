@@ -116,17 +116,16 @@ if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("templates", help="A file with a series of <command> and <component> definitions.")
     arg_parser.add_argument("sentence", help="A sentence to be matched against the templates.")
+    arg_parser.add_argument("-v", "--verbose", action="store_true", help="Enables additional output.")
     args = arg_parser.parse_args()
 
-    # This is not meant to a depency of TemplateManager for the sake of decoupling, but it is useful to be able to
+    # This is not meant to be a dependency of TemplateManager for the sake of decoupling, but it is useful to be able to
     # exercise the manager if command line mode.
     from semantic_tools.parser import TripsAPI
 
     tm = TemplateManager(args.templates)
-    tmp = tm._parsed_commands['MAKE_MOVE'].template[0].resolved
     api = TripsAPI()
 
-    #result = tm.match(api.parse(args.sentence))
-    result = "Not Implemented"
-    print('Template matching result:')
-    print(result)
+    result = api.parse(args.sentence)
+    print(f'Input sentence parse to:\n{result.pretty_format()}')
+    print('\nTemplate matching result:\n NOT IMPLEMENTED')
