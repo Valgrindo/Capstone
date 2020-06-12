@@ -7,8 +7,7 @@ A class hierarchy for a compact and simplified AMR Logical Form representation.
 CS 788.01 MS Capstone Project
 """
 from typing import *
-from bs4 import BeautifulSoup
-from bs4 import NavigableString, Tag
+from bs4 import BeautifulSoup, NavigableString, Tag, Comment
 
 
 class CommandTemplateError(Exception):
@@ -62,6 +61,21 @@ class LogicalForm:
             # SPEECHACTs have a CONTENT role, a PUT has AGENT, AFFECTED, and some more.
             self.roles = [{}]  # type: List[Dict[str: List[LogicalForm.Component]]]
 
+        def _move(self, other):
+            """
+            Copy the data from another Component into this one. Inspired by C++ move semantics.
+            :param other: Component to copy from.
+            :return: None
+            """
+            other = other._root
+            self.comp_id = other.comp_id
+            self.indicator = list(other.indicator)
+            self.comp_type = list(other.comp_type)
+            self.word = None if other.word is None else list(other.word)
+            self.param_mapping = other.param_mapping
+            self._resolved = other._resolved
+            self.roles = other.roles
+
         def __str__(self):
             """
             Get a string representation of the component's base.
@@ -97,10 +111,11 @@ class LogicalForm:
             :return:
             """
             result = self._resolved
-            for _, rcomps in self.roles:
-                for comp in rcomps:
-                    # This being a property propagates changes upwards.
-                    result = result and comp.resolved
+            for rg in self.roles:
+                for rcomps in rg.values():
+                    for comp in rcomps:
+                        # This being a property propagates changes upwards.
+                        result = result and comp.resolved
 
             return result
 
@@ -115,14 +130,14 @@ class LogicalForm:
                 if self.comp_id not in comps:
                     raise CommandTemplateError(f'Cannot resolve external component ID {self.comp_id}')
 
-                # TODO: Copy over the resolver into self
-                raise NotImplementedError("Copy the data of the component resolver")
+                self._move(comps[self.comp_id])  # 'Shift' resolver data into this node
             else:
                 # If the component does not expect explicit resolution, its children might
                 for rg in self.roles:
                     for cs in rg.values():
-                        if not cs.resolved:
-                            cs.resolve(comps)  # TODO Double check that this actually updates the references.
+                        for c in cs:
+                            if not c.resolved:
+                                c.resolve(comps)  # TODO Double check that this actually updates the references.
 
     __component_id = 0
 
@@ -150,6 +165,12 @@ class LogicalForm:
         else:
             self._root = self._process_template(template)
 
+    def __str__(self):
+        return f'LogicalForm {self.my_id}'
+
+    def __repr__(self):
+        return self.__str__()
+
     @property
     def my_id(self):
         """
@@ -166,7 +187,7 @@ class LogicalForm:
         """
         return self._root.resolved
 
-    def resolve(self, comps: Dict[str: Component]) -> NoReturn:
+    def resolve(self, comps: Dict[str, Component]) -> NoReturn:
         """
         Marry any unresolved internal components with a given set.
         :param comps: A mapping of component IDs to components.
@@ -244,13 +265,13 @@ class LogicalForm:
     String Parsing
     """
     @staticmethod
-    def _next_id():
+    def _next_id() -> str:
         """
         Components not explicitly Id'd by a programmer need an ID, and this generates a unique one.
         :return:
         """
         LogicalForm.__component_id -= 1
-        return LogicalForm.__component_id
+        return str(LogicalForm.__component_id)
 
     def _process_template(self, template: Union[str, Tag]) -> Component:
         """
@@ -292,9 +313,21 @@ class LogicalForm:
         # A role may contain one or more expected components, parsed recursively.
         # No components indicates a wildcard accepting anything.
         components = []  # type: List[LogicalForm.Component]
+        if not root.children:
+            raise CommandTemplateError(f'No components for role {role_name}')
 
         for child in root.children:
-            components.append(LogicalForm.__parse_component(child))
+            if (isinstance(child, NavigableString) and child == "\n") or isinstance(child, Comment):
+                continue
+
+            # Role children can be plain strings or nested components.
+            if isinstance(child, NavigableString) and child != "\n":
+                # Interpret plain text role values as closed components with words
+                tmp = LogicalForm.Component(LogicalForm._next_id())
+                tmp.word = [child.strip(' \n')]
+                components.append(tmp)
+            else:
+                components.append(LogicalForm.__parse_component(child))
 
         return role_name, components
 
@@ -337,6 +370,7 @@ class LogicalForm:
             params = map(str.strip, root.attrs['map_param'].split(','))
             for p in params:
                 cmp.param_mapping[p] = None  # Values get filled in during template matching.
+                # TODO: Could the dictionary be reduced to a set? Actual mapping happens within LogicalForm
 
         # If any of the following 3 attributes are populated, then those specific values are expected of the template.
         # Otherwise, component lists are left empty to signal a wildcard.
@@ -358,24 +392,30 @@ class LogicalForm:
         # <role> tags within a <rolegroup> are AND clauses for the component combination.
         # For syntactic simplicity, a <component> can have only <role>s with no <rolegroup>
 
+        children = list(filter(lambda c: isinstance(c, Tag), root.children))
         # If the component has no children, we are done.
-        if not root.children:
+        if not children:
             return cmp
 
-        first_name = root.children[0].name
-        if not all(child.name == first_name for child in root.children):
+        first_name = children[0].name
+
+        if not all(child.name == first_name for child in children):
             raise CommandTemplateError(f'Role mismatch: Expected either all <rolegroup> or all <role>')
 
         roleset = 0
-        for child in root.children:
+        for child in children:
             if child.name == 'rolegroup':
-                if len(child.children) == 0:
+                roles = list(filter(lambda c: isinstance(c, Tag), child.children))
+                if len(roles) == 0:
                     raise CommandTemplateError('A <rolegroup> cannot be empty.')
 
                 # Found the next rolegroup. Advance the index and parse all component roles.
-                roleset += 1
-                roleset_dict = dict([LogicalForm.__parse_role(r) for r in child.children])
+                roleset_dict = dict([LogicalForm.__parse_role(r) for r in roles])
+                if roleset == len(cmp.roles):
+                    cmp.roles.append({})  # Expand role sets storage
+
                 cmp.roles[roleset] = roleset_dict
+                roleset += 1
             elif child.name == 'role':
                 rkey, rval = LogicalForm.__parse_role(child)
                 cmp.roles[roleset][rkey] = rval
@@ -393,7 +433,7 @@ class LogicalForm:
         :return: A root component of the hierarchy.
         """
         bs = BeautifulSoup(xml_string, 'xml')
-        components = {}  # type: Dict[str: LogicalForm.Component]
+        components = {}  # type: Dict[str, LogicalForm.Component]
 
         comp_data = bs.findAll('rdf:Description')
 

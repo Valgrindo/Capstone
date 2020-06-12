@@ -14,6 +14,11 @@ This one describes the IN_LOC structure -->
                     <component indicator="F" word="TOP, BOTTOM" map_param="row"/>
                 </role>
             </rolegroup>
+            <rolegroup>
+                <role name="FAKE">
+                    "Plain role value"
+                </role>
+            </rolegroup>
         </component>
         <!-- alternative to the above component -->
         <component indicator="BARE" word="CENTER, MIDDLE" map_param="column, row"/>

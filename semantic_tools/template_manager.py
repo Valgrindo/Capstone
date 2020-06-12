@@ -9,7 +9,7 @@ import argparse
 from typing import *
 
 from semantic_tools.logical_form import LogicalForm, CommandTemplateError
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
 class Command:
@@ -61,6 +61,9 @@ class TemplateManager:
         self._parsed_commands = {}  # type: Dict[str: Command]
 
         for elem in root.children:
+            if not isinstance(elem, Tag):
+                continue  # Skip junk elements
+
             cmd = None
             # Two kinds of children are possible: a <command> and a <component>
             if elem.name == 'component':
@@ -75,7 +78,8 @@ class TemplateManager:
                 if cmd.name in self._parsed_commands:
                     raise CommandTemplateError(f'Duplicate command name {cmd.name}')
 
-                for c_comp in elem.children:
+                children = list(filter(lambda c: isinstance(c, Tag), elem.children))
+                for c_comp in children:
                     if c_comp.name != 'component':
                         raise CommandTemplateError(f'Unexpected top-level tag under <command>: {c_comp.name}. Only '
                                                    f'<component> allowed.')
@@ -85,14 +89,16 @@ class TemplateManager:
                 # Illegal tag detected.
                 raise CommandTemplateError(f'Unexpected tag {elem.name}')
 
-            self._parsed_commands[cmd.name] = cmd  # Add the command to the library.
+            if cmd:
+                self._parsed_commands[cmd.name] = cmd  # Add the command to the library.
 
         # After the file has been processed, we are left with a set of "loose" components and
         # a set of potentially unresolved commands.
         # Go through the commands and attempt to resolve them.
         for command in self._parsed_commands.values():
             for lf in command.template:
-                lf.resolve(self._unresolved_comps)
+                if not lf.resolved:
+                    lf.resolve(self._unresolved_comps)
 
     def match(self, lf: LogicalForm) -> Optional[Command]:
         """
@@ -116,9 +122,11 @@ if __name__ == '__main__':
     # exercise the manager if command line mode.
     from semantic_tools.parser import TripsAPI
 
-    tm = TemplateManager(args.template_file)
+    tm = TemplateManager(args.templates)
+    tmp = tm._parsed_commands['MAKE_MOVE'].template[0].resolved
     api = TripsAPI()
 
-    result = tm.match(api.parse(args.sentence))
+    #result = tm.match(api.parse(args.sentence))
+    result = "Not Implemented"
     print('Template matching result:')
     print(result)
