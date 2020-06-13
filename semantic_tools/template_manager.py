@@ -127,5 +127,5 @@ if __name__ == '__main__':
     api = TripsAPI()
 
     result = api.parse(args.sentence)
-    print(f'Input sentence parse to:\n{result.pretty_format()}')
+    #print(f'Input sentence parse to:\n{result.pretty_format()}')
     print('\nTemplate matching result:\n NOT IMPLEMENTED')
