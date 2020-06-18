@@ -1,0 +1,6 @@
+<!-- Test that commands require a name -->
+<commands>
+    <command>
+        <component word="TEST"/>
+    </command>
+</commands>

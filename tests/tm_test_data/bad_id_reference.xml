@@ -1,0 +1,16 @@
+<!-- Test that a component defined separately from a command with a non-matching ID fails -->
+<commands>
+
+    <command name="TO_RESOLVE">
+        <component indicator="SPEECHACT" type="SA_TELL">
+            <role name="CONTENT">
+                <!-- This component sis defined externally -->
+                <component from_id="MISSING-ID"/>
+            </role>
+        </component>
+    </command>
+
+    <!-- And here is the definition -->
+    <component id="BAD-ID" indicator="BARE" type="FRUIT" word="APPLE"/>
+
+</commands>

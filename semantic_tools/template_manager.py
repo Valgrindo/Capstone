@@ -35,6 +35,16 @@ class Command:
     def __repr__(self):
         return self.__str__()
 
+    def dump(self) -> str:
+        """
+        :return: A string representation of the underlying templates.
+        """
+        result = f'<command {self.name}>\n'
+        for t in self.template:
+            result += t.pretty_format()
+
+        return result + '</command>'
+
 
 class TemplateManager:
     """
@@ -54,7 +64,7 @@ class TemplateManager:
 
         # Expected structure is a root <commands> tag followed by a series of <command> and <component> definitions.
         root = bs.find('commands')
-        if len(root) == 0:
+        if root is None:
             raise CommandTemplateError('Missing root <commands> tag.')
 
         self._unresolved_comps = {}  # type: Dict[str: LogicalForm.Component]
@@ -109,6 +119,15 @@ class TemplateManager:
         :return: A Command if one was matched.
         """
         raise NotImplementedError("TemplateManager.match()")
+
+    def dump(self) -> str:
+        """
+        :return: Return a string representation of this library.
+        """
+        result = ''
+        for c in self._parsed_commands.values():
+            result += c.dump()
+        return result
 
 
 # If running in script mode, get the source file as command line arg.
