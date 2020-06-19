@@ -25,7 +25,7 @@ class Command:
         """
         self.name = name
         # A reference to the template defining this command.
-        # A list is nessesary to accomodate multiple top-level components.
+        # A list is necessary to accommodate multiple top-level components.
         self.template = []  # type: List[LogicalForm]
         self.bound_params = {}  # type: Dict[str: str] # This will be populated with all params bound in the LF tree.
 
@@ -118,7 +118,17 @@ class TemplateManager:
         :param lf: The logicalForm of a sentence.
         :return: A Command if one was matched.
         """
-        raise NotImplementedError("TemplateManager.match()")
+        # In essence, a LogicalForm is a tree. Each Component node may have N rolegroup children, each one represening
+        # a set of AND clauses. Each role node must contain at leas one component, all components being an OR clause.
+        for _, c in self._parsed_commands.items():
+            for c_lf in c.template:
+                is_match, params = lf.match_template(c_lf)
+                if is_match:
+                    c.bound_params = params
+                    return c
+
+        # If we checked all the options under this command and nothing matched, then there is no match.
+        return None
 
     def dump(self) -> str:
         """
@@ -146,5 +156,17 @@ if __name__ == '__main__':
     api = TripsAPI()
 
     result = api.parse(args.sentence)
-    #print(f'Input sentence parse to:\n{result.pretty_format()}')
-    print('\nTemplate matching result:\n NOT IMPLEMENTED')
+    if args.verbose:
+        print(f'Input sentence parses to:\n{result.pretty_format()}')
+
+    # Check if any template from the library matches this command.
+    match = tm.match(result)
+
+    print('\nTemplate matching result:')
+    if match is None:
+        print('\tNO MATCH')
+    else:
+        print(f'\t{match.name}')
+        if args.verbose:
+            print(match.bound_params)
+

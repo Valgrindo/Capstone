@@ -162,8 +162,10 @@ class LogicalForm:
 
         if xml_str:
             self._root = LogicalForm._process_xml(xml_str)
+            self.from_xml = True
         else:
             self._root = self._process_template(template)
+            self.from_xml = False
 
     def __str__(self):
         return f'LogicalForm {self.my_id}'
@@ -171,6 +173,138 @@ class LogicalForm:
     def __repr__(self):
         return self.__str__()
 
+    """
+    Matching
+    """
+    def match_template(self, lf) -> Tuple[bool, Dict[str, str]]:
+        """
+        Compare this LogicalForm to another one for structural equality.
+        :param lf: Other LogicalForm
+        :return: True if the structure and patterns withing the other LogicalForm match this one. False otherwise.
+            Additionally, return a dictionary of parameters bound by the compared LF.
+        """
+        if not isinstance(lf, LogicalForm):
+            raise ValueError(f'Expected {LogicalForm} argument, got {type(lf)}.')
+
+        # Recursively walk the structure of the given LF and compare it to own.
+        # At any level, there may be multiple branches that are an intermediate match. Recurse down all of them.
+        # If a complete match is achieved from multiple recursive calls, pick the first one and report a runtime
+        # warning -- the source of the ambiguity is a poorly written template.
+        if bool(self._root) != bool(lf._root):
+            return False, {}
+
+        if self._root is None and lf._root is None:
+            return True, {}
+
+        return LogicalForm._compare_help(self._root, lf._root)
+
+    @staticmethod
+    def _compare_help(this, other) -> Tuple[bool, Dict[str, str]]:
+        """
+        Recursive helper function for LF comparison.
+        Parameters will be extracted from 'this' using the mappings of 'other'
+        :param this: Compared instance.
+        :param other: Instance compared to.
+        :return:
+        """
+        # this and other are expected to be Components at the same level of the tree.
+        # Components match if all the following are true:
+        # 1) There is overlap between indicator sets
+        # 2) There is overlap between type sets
+        # 3) There is overlap between word sets
+        # 4) There is an exact match within a rolegroup by name
+        # 5) There is matching overlap between child components within the matched rolegroup.
+
+        # A role parsed form XML might be a simple string.
+        # An equivalent element parsed from a template is a component, since there could be multiple string options
+        if isinstance(this, str):
+            match = this in other.word
+            return match, {p_name: this for p_name in other.param_mapping.keys()}
+
+        # Lists share a common element if their intersection iss a nonempty set.
+        lst_common = lambda lst_t: bool(set(lst_t[0]).intersection(set(lst_t[1])))
+
+        # Indicators match if any of them are wildcards (empty lists) or if the intersection of sets is nonempty
+        match = not (this.indicator and other.indicator) or lst_common((this.indicator, other.indicator))
+        # Same for types
+        match = match and (not (this.comp_type and other.comp_type) or lst_common((this.comp_type, other.comp_type)))
+        # Same for words
+        match = match and (not (this.word and other.word) or lst_common((this.word, other.word)))
+
+        if not match:
+            # No surface-level match means no need to recurse further.
+            # Also no need to return any parameters from this branch.
+            return False, {}
+
+        # TODO: Do we need a warning if there were multiple candidate words? Shouldn't be possible.
+        # Map the word value stored in this component to parameter names specified by the template.
+        mapped_val = this.word[0] if this.word else None
+        param_map = {k: mapped_val for k in other.param_mapping.keys()}
+
+        # Find all the rolegroups that match between this and other.
+        check_q = []
+        for rg in this.roles:
+            for rg_other in other.roles:
+                command_roles = set(rg.keys())
+                template_roles = set(rg_other.keys())
+
+                # The roles of the template must be a subset of the roles of the command.
+                # i.e. If the command has roles A, B, and C, and the template has role B, then the template matches.
+                # However, template with B and D is NOT a match to command A, B, C
+                if all(r in command_roles for r in template_roles):
+                    # The rolegroups match roles
+                    check_q.append((rg, rg_other))
+
+        # For each pair of matching rolegroups, recurse on all corresponding components.
+        # At least one rolegroup has to match in order for the whole template to match.
+        param_set = {}
+        one_rg_match = False
+        for this_rg, other_rg in check_q:
+
+            # Every role must fully match within a rolegroup
+            all_match = True
+            rg_set = {}  # set of parameters from this set of roles
+            for name in this_rg.keys():
+                # Since this RG has been established as a superset of other RG, there may be roles not present
+                # in other. That simply means that the role is a match and no parameters are bound.
+                if name not in other_rg:
+                    continue
+
+                to_match = this_rg[name][0]  # This is the component the template needs to match.
+                candidates = other_rg[name]  # This is the candidate components
+
+                # Recurse on all options from the template. At least one must match.
+                results = map(lambda x: LogicalForm._compare_help(to_match, x), candidates)
+                results = list(filter(lambda x: x[0], results))
+                if not results:
+                    all_match = False
+                    break
+                for k, v in results[0][1].items():
+                    if k not in rg_set:
+                        rg_set[k] = v
+
+            # Stop comparing if we found a matching rolegroup.
+            if all_match:
+                one_rg_match = True
+                param_set = rg_set
+                break
+
+        # Not a single rolegroup matched from the template.
+        # This component is not a match
+        if not one_rg_match:
+            return False, {}
+
+        # At least one rolegroup matched.
+        # Add the parameters extracted from the matched rolegroup to the set.
+        for k, v in param_set.items():
+            if k not in param_map:
+                param_map[k] = v
+
+        return True, param_map
+
+    """
+    ID resolution
+    """
     @property
     def my_id(self):
         """
