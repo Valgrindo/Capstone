@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/integration" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/semantic_tools" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/command_dispatch" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/battleship" />
     </content>
     <orderEntry type="inheritedJdk" />

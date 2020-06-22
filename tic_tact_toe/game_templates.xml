@@ -1,0 +1,24 @@
+<!-- A small and trivial collection of templates for Tic Tac Toe commands -->
+
+<commands>
+
+    <!-- Accepts sentences that denote a location on a 3x3 Tic Tac Toe board.
+        Expected forms:
+            {X | O} {on | in | into} {top | bottom} {left | right}
+            {X | O} {on | in | into} center
+
+        Binds two parameters representing the specified placement.
+    -->
+    <command name="TAKE_TURN">
+
+        <!-- Command can be either a statement or a request -->
+        <component indicator="SPEECHACT" type="SA_TELL, SA_REQUEST">
+            <role name="CONTENT">
+                # TODO
+            </role>
+        </component>
+    </command>
+
+
+    <!-- Other commands would go here -->
+</commands>

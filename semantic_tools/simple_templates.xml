@@ -35,6 +35,7 @@
                 <component type="FRUIT" map_param="meal_fruit"/>
                 <component type="FOOD" map_param="meal_any"/>
             </role>
+            <role name="NEGATION">-</role>
         </rolegroup>
         <rolegroup>
             <role name="AFFECTED">
