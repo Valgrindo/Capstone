@@ -1,0 +1,4 @@
+True; "A man ate an apple"; {"verb":"EAT", "agent":"MAN", "meal":"APPLE"}
+False; "A man ate an orange"
+False; "A man consumed an apple"
+False; "A person ate an apple"

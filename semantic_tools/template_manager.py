@@ -7,6 +7,8 @@ Contains functionality related to user-defined Command Templates.
 
 import argparse
 from typing import *
+from os.path import isfile, join, isdir
+from os import listdir
 
 from semantic_tools.logical_form import LogicalForm, CommandTemplateError
 from bs4 import BeautifulSoup, Tag
@@ -54,53 +56,64 @@ class TemplateManager:
     # TODO: nothing stopping an expansion to a directory with multiple files for ultimate modularity.
     # TODO: Gotta look into that if I get the time.
 
-    def __init__(self, template_file: str):
+    def __init__(self, template_source: str):
         """
         Initialize this manager with a file of Templates.
-        :param template_file: A file containing a series of command template definitions.
+        :param template_source: A file or directory containing a series of command template definitions.
         """
-        with open(template_file, 'r') as fp:
-            bs = BeautifulSoup(fp, 'xml')
-
-        # Expected structure is a root <commands> tag followed by a series of <command> and <component> definitions.
-        root = bs.find('commands')
-        if root is None:
-            raise CommandTemplateError('Missing root <commands> tag.')
+        source_files = []
+        if isfile(template_source):
+            source_files.append(template_source)
+        elif isdir(template_source):
+            # Supply the directory name as a prefix
+            source_files.extend(join(template_source, f) for f in listdir(template_source))
+        else:
+            raise ValueError(f'Invalid template source {template_source}')
 
         self._unresolved_comps = {}  # type: Dict[str: LogicalForm.Component]
         self._parsed_commands = {}  # type: Dict[str: Command]
 
-        for elem in root.children:
-            if not isinstance(elem, Tag):
-                continue  # Skip junk elements
+        # For each template source file:
+        for f in source_files:
+            with open(f, 'r') as fp:
+                bs = BeautifulSoup(fp, 'xml')
 
-            cmd = None
-            # Two kinds of children are possible: a <command> and a <component>
-            if elem.name == 'component':
-                # This is a standalone component. It is expected to be used elsewhere, so it must be explicitly named.
-                comp = LogicalForm(template=elem, require_id=True)
-                self._unresolved_comps[comp.my_id] = comp
-            elif elem.name == 'command':
-                # A command has a name an candidate root components.
-                if 'name' not in elem.attrs:
-                    raise CommandTemplateError('Command missing a name attribute.')
-                cmd = Command(name=elem.attrs['name'])
-                if cmd.name in self._parsed_commands:
-                    raise CommandTemplateError(f'Duplicate command name {cmd.name}')
+            # Expected structure is a root <commands> tag followed by a series of <command> and <component> definitions.
+            root = bs.find('commands')
+            if root is None:
+                raise CommandTemplateError('Missing root <commands> tag.')
 
-                children = list(filter(lambda c: isinstance(c, Tag), elem.children))
-                for c_comp in children:
-                    if c_comp.name != 'component':
-                        raise CommandTemplateError(f'Unexpected top-level tag under <command>: {c_comp.name}. Only '
-                                                   f'<component> allowed.')
-                    comp_lf = LogicalForm(template=c_comp)
-                    cmd.template.append(comp_lf)
-            else:
-                # Illegal tag detected.
-                raise CommandTemplateError(f'Unexpected tag {elem.name}')
+            for elem in root.children:
+                if not isinstance(elem, Tag):
+                    continue  # Skip junk elements
 
-            if cmd:
-                self._parsed_commands[cmd.name] = cmd  # Add the command to the library.
+                cmd = None
+                # Two kinds of children are possible: a <command> and a <component>
+                if elem.name == 'component':
+                    # This is a standalone component. It is expected to be used elsewhere, so it must be explicitly named.
+                    comp = LogicalForm(template=elem, require_id=True)
+                    self._unresolved_comps[comp.my_id] = comp
+                elif elem.name == 'command':
+                    # A command has a name an candidate root components.
+                    if 'name' not in elem.attrs:
+                        raise CommandTemplateError('Command missing a name attribute.')
+                    cmd = Command(name=elem.attrs['name'])
+                    if cmd.name in self._parsed_commands:
+                        raise CommandTemplateError(f'Duplicate command name {cmd.name}')
+
+                    children = list(filter(lambda c: isinstance(c, Tag), elem.children))
+                    for c_comp in children:
+                        if c_comp.name != 'component':
+                            raise CommandTemplateError(f'Unexpected top-level tag under <command>: {c_comp.name}. Only '
+                                                       f'<component> allowed.')
+                        comp_lf = LogicalForm(template=c_comp)
+                        cmd.template.append(comp_lf)
+                else:
+                    # Illegal tag detected.
+                    raise CommandTemplateError(f'Unexpected tag {elem.name}')
+
+                if cmd:
+                    self._parsed_commands[cmd.name] = cmd  # Add the command to the library.
 
         # After the file has been processed, we are left with a set of "loose" components and
         # a set of potentially unresolved commands.
@@ -143,7 +156,7 @@ class TemplateManager:
 # If running in script mode, get the source file as command line arg.
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("templates", help="A file with a series of <command> and <component> definitions.")
+    arg_parser.add_argument("templates", help="A file or directory with a series of <command> and <component> definitions.")
     arg_parser.add_argument("sentence", help="A sentence to be matched against the templates.")
     arg_parser.add_argument("-v", "--verbose", action="store_true", help="Enables additional output.")
     args = arg_parser.parse_args()

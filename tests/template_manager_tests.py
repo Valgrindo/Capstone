@@ -11,8 +11,19 @@ from typing import *
 from os import listdir, chdir
 from os.path import isdir, splitext, isfile, join
 from math import floor
+from enum import Enum
+from json import loads
 
 from semantic_tools.template_manager import TemplateManager
+from semantic_tools.parser import TripsAPI
+
+
+class TestMode(Enum):
+    """
+    An enumeration for the different kinds of test modes.
+    """
+    PARSE = 'PARSE',
+    MATCH = 'MATCH'
 
 
 XML = '.xml'
@@ -22,7 +33,7 @@ DIR = ''
 TAB_COL = 12
 
 
-def run_test(source: str, exp_out: str, exp_error: bool = False) -> Tuple[bool, str, str]:
+def run_parse_test(source: str, exp_out: str, exp_error: bool = False) -> Tuple[bool, str, str]:
     """
     Given an source file or directory, parse it into a TemplateLibrary and compare it with expected output.
     :param source: A path to a file or directory.
@@ -103,16 +114,11 @@ def all_valid(dir_name: str) -> Tuple[bool, List[str]]:
     return len(errors) == 0, errors
 
 
-if __name__ == '__main__':
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("test_data", help="A directory of (#.xml, #.out) or (#, #.out) pairs with test setup "
-                                              "and expected results.")
-    args = arg_parser.parse_args()
-
-    if not isdir(args.test_data):
-        print(f'Error: <test_data> must be a directory.')
-        exit(1)
-
+def run_parse_tests():
+    """
+    Perform all the work related to running a TemplateManager parsing tests.
+    :return:
+    """
     # Test if the provided test files are correct.
     valid, errors = all_valid(args.test_data)
     if not valid:
@@ -141,7 +147,7 @@ if __name__ == '__main__':
         tabs = floor(len(msg) / 4)
 
         print(msg, '\t' * (TAB_COL - tabs), end='')
-        success, want, got = run_test(config, expected)
+        success, want, got = run_parse_test(config, expected)
         completed.add(name)
         if success:
             print('Success.')
@@ -153,3 +159,101 @@ if __name__ == '__main__':
     proportion = (test_success / test_count) * 100
     print(f'TESTING COMPLETE! Result: ({test_success}/{test_count}) {proportion:.1f}% correct.')
 
+
+def run_match_tests():
+    """
+    Perform all the work related to running a TemplateManager matching tests.
+    :return:
+    """
+    # Expected setup for this test is a collection of template libraries and sets of accepted/rejected sentences with
+    # the appropriate parameter mappings.
+    libraries = args.test_data
+
+    # Test if the provided test files are correct.
+    valid, errors = all_valid(libraries)
+    if not valid:
+        print(f'Found {len(errors)} errors with supplied files:')
+        for e in errors:
+            print('\t' + e)
+        exit(1)
+
+    print('BEGIN TESTING:')
+    test_count, test_success = 0, 0
+    completed = set()  # type: Set[str]
+    api = TripsAPI()
+
+    # Switch directory for easy file lookup
+    chdir('.\\' + libraries)
+
+    # For each pair of files, create a TemplateManager out of the XML library
+    # Then, try to match all provided phrases in a .out file to expected outcomes
+    for file in listdir('.'):
+        name, ext = splitext(file)
+        results = name + OUT
+
+        source = name + XML
+        if isdir(name):
+            source = name
+
+        if name in completed:
+            continue
+        completed.add(name)
+
+        print(f'Running test group {name}:')
+        # Create a manager. Expected to succeed.
+        tm = TemplateManager(source)
+
+        # Run all the subtests
+        with open(results, 'r') as rfp:
+            for test in rfp:
+                data = test.strip().split(';')  # [Test expectation, sentence, Optional param dictionary]
+                print(f'\t{data[1]} \t\t--> ', end='')
+
+                result = tm.match(api.parse(data[1]))
+
+                # If we expect no match, i.e. the flag is FALSE, the result must be None
+                if (data[0].upper() == 'FALSE') and (result is None):
+                    test_success += 1
+                    print('Correct')
+                elif data[0].upper() == 'FALSE':
+                    print(f'\nEXPECTED:\n NO MATCH\n\nGOT:\n{result}')
+                elif data[0].upper() == 'TRUE' and (result is None):
+                    print('\nEXPECTED:\n MATCH\n\nGOT:\nNO MATCH')
+                else:
+                    # Expected and got a match. Must validate the argument dictionary if applicable.
+                    got_params = result.bound_params
+                    exp_params = loads(data[2])
+                    if got_params == exp_params:
+                        print('Correct.')
+                        test_success += 1
+                    else:
+                        print(f'\nEXPECTED:\n{exp_params}\nGOT:\n{got_params}')
+
+                test_count += 1
+    proportion = (test_success / test_count) * 100
+    print(f'TESTING COMPLETE! Result: ({test_success}/{test_count}) {proportion:.1f}% correct.')
+
+
+if __name__ == '__main__':
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("test_data", help="A directory of (#.xml, #.out) or (#, #.out) pairs with test setup "
+                                              "and expected results.")
+    arg_parser.add_argument("-m", "--mode", type=str, choices=['parse', 'match'],
+                            help="Use 'parse' mode to test the TemplateManager's parsing of template libraries.\n"
+                                 "Use 'match' mode to test the TemplateManager's matching of sentences to templates.\n"
+                                 "Use 'all' to do both.")
+    args = arg_parser.parse_args()
+
+    if not isdir(args.test_data):
+        print(f'Error: {args.test_data} is not a directory')
+
+    # Determine what kind of tests to run.
+    mode = TestMode.PARSE
+    if (args.mode is not None) and (args.mode.upper() == TestMode.MATCH.name):
+        mode = TestMode.MATCH
+
+    if mode == TestMode.PARSE:
+        run_parse_tests()
+
+    if mode == TestMode.MATCH:
+        run_match_tests()

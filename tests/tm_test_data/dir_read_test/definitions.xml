@@ -1,0 +1,8 @@
+<!-- This test verifies that the system can handle component definitions being in separate files. -->
+<commands>
+
+    <!-- a few simple component definitions. Not used in this file. -->
+    <component id="APPLE" type="FRUIT" word="APPLE"/>
+    <component id="TOMATO" type="FRUIT" word="VEGETABLE"/>
+
+</commands>
