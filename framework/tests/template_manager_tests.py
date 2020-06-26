@@ -14,8 +14,8 @@ from math import floor
 from enum import Enum
 from json import loads
 
-from semantic_tools.template_manager import TemplateManager
-from semantic_tools.parser import TripsAPI
+from template_manager import TemplateManager
+from parser import TripsAPI
 
 
 class TestMode(Enum):
@@ -135,7 +135,7 @@ def run_parse_tests():
     test_count, test_success = 0, 0
     completed = set()  # type: Set[str]
 
-    for item in listdir('.'):
+    for item in listdir('../../tic_tact_toe'):
         name, ext = splitext(item)
         if name in completed:
             continue
@@ -187,7 +187,7 @@ def run_match_tests():
 
     # For each pair of files, create a TemplateManager out of the XML library
     # Then, try to match all provided phrases in a .out file to expected outcomes
-    for file in listdir('.'):
+    for file in listdir('../../tic_tact_toe'):
         name, ext = splitext(file)
         results = name + OUT
 

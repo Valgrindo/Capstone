@@ -10,7 +10,7 @@ from typing import *
 from os.path import isfile, join, isdir
 from os import listdir
 
-from semantic_tools.logical_form import LogicalForm, CommandTemplateError
+from logical_form import LogicalForm, CommandTemplateError
 from bs4 import BeautifulSoup, Tag
 
 
@@ -163,7 +163,7 @@ if __name__ == '__main__':
 
     # This is not meant to be a dependency of TemplateManager for the sake of decoupling, but it is useful to be able to
     # exercise the manager if command line mode.
-    from semantic_tools.parser import TripsAPI
+    from parser import TripsAPI
 
     tm = TemplateManager(args.templates)
     api = TripsAPI()
