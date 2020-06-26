@@ -1,9 +1,0 @@
-<!-- Test that only Components are allowed at the top level of a Command -->
-
-<commands>
-    <command name="TEST">
-        <component word="CMP1"/>
-        <component word="CMP2"/>
-        <role name="Illegal role"/>
-    </command>
-</commands>

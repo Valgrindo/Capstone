@@ -1,7 +1,0 @@
-<command TO_RESOLVE>
-<component SPEECHACT SA_TELL>
-|  <rolegroup>
-|  |  <role CONTENT>
-|  |  |  <component BARE FRUIT APPLE>
-|  </rolegroup>
-</command>

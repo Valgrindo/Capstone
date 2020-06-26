@@ -1,5 +1,0 @@
-<!-- Test the handling of a lone <component> in a file. Should fail because the component has no ID -->
-
-<commands>
-    <component indicator="F" type="TEST" word="TEST"/>
-</commands>

@@ -1,2 +1,0 @@
-<!-- This test is expected to fail, since there is no root <commands> tag-->
-<command name="TEST"></command>
