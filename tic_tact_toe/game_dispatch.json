@@ -1,13 +1,14 @@
 {
   "templates": [
-    "..\\tic_tact_toe\\game_templates.xml"
+    "game_templates.xml"
   ],
   "commands": [
     {
       "name": "TAKE_TURN",
       "type": "INVOKE",
-      "args": ["col", "row"],
+      "args": ["board"],
       "module": "player",
+      "class": "Player",
       "method": "take_turn"
     }
   ]

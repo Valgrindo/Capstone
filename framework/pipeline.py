@@ -12,8 +12,15 @@ from os.path import isfile
 from typing import *
 import json
 import argparse
+import importlib.util
+import inspect
+
+from semantic_tools.template_manager import TemplateManager
+from command_dispatch.command_dispatcher import CommandDispatcher
 
 CONFIGURATION = "configuration.json"  # Expected name and location of the config file.
+CONF_TEMPLATES = "template_lib"
+CONF_DISPATCH = "dispatch_map"
 TUTORIAL = "tutorial.txt"
 USAGE = """pipeline.py [-h] [-v]
 
@@ -36,7 +43,64 @@ def validate_framework_state(config: Dict[str, str]) -> bool:
     :param config: A JSON configuration object.
     :return:
     """
-    pass
+    # Configuration contains the template library and the dispatch mapping.
+    req_keys = [CONF_TEMPLATES, CONF_DISPATCH]
+    for key in req_keys:
+        if key not in config:
+            raise ValueError(f'Missing required {key} configuration key.')
+
+    try:
+        tm = TemplateManager(config[CONF_TEMPLATES])
+        cd = CommandDispatcher(config[CONF_DISPATCH])
+
+        # If the creation of template manager and command dispatcher succeeded, then there were no syntactic errors
+        # in the files. The next step is to make sure that the methods referenced by the dispatcher exist
+        # and are accessible
+        for desc in cd:
+            if hasattr(desc, "module"):
+                if importlib.util.find_spec(desc.module) is None:
+                    raise ValueError(f'Module {desc.module} for command {desc.name} not found.')
+
+            # TODO: It would be fairly trivial to check functions if I were to laod the module.
+            # TODO: Any reason to avoid doing that?
+            # Check that the module exists
+            mod = importlib.import_module(desc.module)
+
+            # if class is specified, is it present?
+            if desc.class_:
+                if not hasattr(mod, desc.class_):
+                    raise ValueError(f'Class {desc.class_} not found in module {desc.module}.')
+                func_ref = getattr(mod, desc.class_)
+            else:
+                func_ref = mod
+
+            # Depending on whether class was specified,
+            # target method is either a member of the class of the module.
+            if not hasattr(func_ref, desc.method):
+                raise ValueError(f'Method {desc.method} not found in module {desc.module}')
+
+            # Check that the function exists within the module.
+            func = getattr(func_ref, desc.method)
+            if not callable(func):
+                raise ValueError(f'{desc.module}.{desc.method} must be callable.')
+
+            # Finally, check if the function actually expects the arguments specified in the description.
+            spec = inspect.signature(func).parameters.copy()
+            del spec['self']
+            if len(spec) != len(desc.args):
+                raise ValueError(f'Argument count mismatch for {desc.method}: expected {len(desc.args)}, but got '
+                                 f'{len(spec)}.')
+
+            for arg in desc.args:
+                if arg not in spec:
+                    raise ValueError(f'Unexpected argument {arg} for {desc.method}.')
+    except Exception as e:
+        if isinstance(e, ValueError):
+            raise e  # Simply rethrow
+        raise ValueError(e)  # Rethrow wrapped as ValueError
+
+    # If the made it to the end, then there were no problems
+    return True
 
 
 """
@@ -46,13 +110,15 @@ mappings from.
 """
 if __name__ == '__main__':
 
-    arg_parser = argparse.ArgumentParser(usage=USAGE)
+    arg_parser = argparse.ArgumentParser(usage=USAGE, add_help=False)
     arg_parser.add_argument("-v", "--validate", action="store_true",
                             help="Validate all framework components.")
+    arg_parser.add_argument("-h", "--help", action="store_true",
+                            help="Display a simple tutorial.")
     args = arg_parser.parse_args()
 
     # If neither flag was specified, there is nothing to do.
-    if not (args.validate and args.help):
+    if not (args.validate or args.help):
         arg_parser.print_usage()
         print('\nVoice Control Integration Pipeline\n',
               'Copyright © 2020 by Sergey Goldobin')

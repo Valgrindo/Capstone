@@ -8,16 +8,40 @@ validates dispatch maps loaded into the framework, and passes on command argumen
 
 import argparse
 import json
-from os.path import isfile, isdir, splitext
+from os.path import isfile, isdir, split, join
 from os import listdir
 from bs4 import BeautifulSoup
 from typing import *
+from enum import Enum
 
 TEMPLATE_KEY = "templates"  # JSON dictionary key for template source listing
 COMMAND_KEY = "commands"    # JSON dictionary key for mapping description listing
 CMD_NAME_KEY = "name"       # JSON dictionary key for command name
 
+META_KEYS = ["templates", "commands"]
+GENERAL_FIELDS = ["name", "type"]
+INVOKE_FIELDS = ["method", "module"]
+GET_FIELD = "args"
 XML_EXT = ".xml"
+
+
+class MappingType(Enum):
+    """
+    An enumeration of different types of mappings.
+    """
+    GET = "GET",
+    INVOKE = "INVOKE",
+    ERROR = ""
+
+    @staticmethod
+    def parse(item: str):
+        if not isinstance(item, str):
+            return MappingType.ERROR
+
+        try:
+            return MappingType[item]
+        except KeyError:
+            return MappingType.ERROR
 
 
 class CommandDispatcher:
@@ -33,7 +57,46 @@ class CommandDispatcher:
         """
         A collection of surface level information about a command
         """
-        pass
+
+        def __init__(self, data: Dict[str, str]):
+            self.name = data["name"]
+            self.type = MappingType.parse(data["type"])
+
+            if self.type is MappingType.GET:
+                # At least one argument is required
+                if "args" not in data:
+                    raise CommandDispatcher.DispatchMapException('Missing required "args" key for GET mapping.')
+
+                if not data["args"]:
+                    raise CommandDispatcher.DispatchMapException('Empty arguments set in a GET mapping.')
+
+                self.args = data["args"]
+            elif self.type is MappingType.INVOKE:
+                for field in INVOKE_FIELDS:
+                    if field not in data:
+                        raise CommandDispatcher.DispatchMapException(f'Missing required {field} key for INVOKE mapping.')
+                    setattr(self, field, data[field])  # Dynamically create the relevant fields
+
+                if "args" in data:
+                    self.args = data["args"]  # Args are optional for invokes
+                if "class" in data:
+                    self.class_ = data["class"]  # Class is optional for invokes
+
+            else:
+                raise CommandDispatcher.DispatchMapException(f'Invalid command type {data["type"]}')
+
+        def __str__(self):
+            if self.type is MappingType.GET:
+                return f'name: {self.name}\n' + \
+                        f'\targs: {self.args}'
+            elif self.type is MappingType.INVOKE:
+                return f'name: {self.name}\n' + \
+                        f'\targs: {self.args}\n' + \
+                        f'\tmodule: {self.module}\n' + \
+                        f'\tclass: {self.class_}' + \
+                        f'\tmethod: {self.method}'
+            else:
+                return 'ERROR'
 
     def __init__(self, dispatch_map: str):
         """
@@ -46,6 +109,8 @@ class CommandDispatcher:
         file_data = json.load(fp)
         fp.close()
 
+        context_path = split(dispatch_map)[0]  # The context for files referenced in the map
+
         # First, check that a valid set of template files were supplied. Gather the set of commands named in the files.
         # Actual command validation is up to the TemplateManager. DOes not occur here, but will in the unified pipeline,
         # since the template parsing step would precede this.
@@ -55,6 +120,7 @@ class CommandDispatcher:
         cmd_names = set()  # type: Set[str]
 
         for item in file_data[TEMPLATE_KEY]:
+            item = join(context_path, item)
             # Each item is either an XML file or a directory of XML files.
             if isfile(item) and not item.endswith(XML_EXT):
                 raise CommandDispatcher.DispatchMapException(f"Unexpected template file extension for {item}")
@@ -71,23 +137,38 @@ class CommandDispatcher:
 
                 tags = bs.findAll('command')
                 for t in tags:
-                    cmd_names.add(t.name)  # TODO: Add content, not tag name
+                    cmd_names.add(t.attrs['name'])
 
         # Now that all available names have been retrieved, check the list of command mappings for violations.
         if COMMAND_KEY not in file_data:
             raise CommandDispatcher.DispatchMapException("Command mapping attribute 'commands' not found.")
 
+        # Every mapping must have a name and a type
+        # For GET mappings, at least one ARG is required
+        # for INVOKE mappings, module and method are required
         for desc in file_data[COMMAND_KEY]:
-            if CMD_NAME_KEY not in desc:
-                raise CommandDispatcher.DispatchMapException("Command description missing 'name' attribute")
-
             if desc[CMD_NAME_KEY] not in cmd_names:
                 raise CommandDispatcher.DispatchMapException(f"Undefined command {desc[CMD_NAME_KEY]}")
 
-            # TODO: Check for presence of other required attributes: type, args, module, method
+            mapping = CommandDispatcher.CommandMapping(desc)
 
             # Everything is correct. Copy the mapping.
-            self._mappings[desc[CMD_NAME_KEY]] = desc
+            self._mappings[mapping.name] = mapping
+
+    def dump(self) -> str:
+        """
+        Convert this dispatcher into a string.
+        :return:
+        """
+        return '\n'.join(map(str, self._mappings.values()))
+
+    def __iter__(self):
+        """
+        An iterator over internal mappings.
+        :return:
+        """
+        for mapping in self._mappings.values():
+            yield mapping
 
 
 if __name__ == '__main__':
@@ -110,6 +191,7 @@ if __name__ == '__main__':
 
     # If no exception occurred upon initialization, then the map is good to go.
     print('Dispatch map validated!')
+    print(cd.dump())
 
 
 
