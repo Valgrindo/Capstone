@@ -1,0 +1,4 @@
+{
+  "template_lib": "..\\tic_tact_toe\\game_templates.xml",
+  "dispatch_map": "..\\tic_tact_toe\\game_dispatch.json"
+}
