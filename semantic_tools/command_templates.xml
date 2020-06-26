@@ -1,0 +1,48 @@
+<!-- This is a set of sample command templates for a game of Tic Tac Toe -->
+<commands>
+
+<!-- Commands can be independent so long as they are named
+This one describes the IN_LOC structure -->
+<component indicator="F" type="IN_LOC" id="in_comp">
+    <role name="FIGURE">
+        <component indicator="BARE" word="X, O, o" map_param="piece"/>
+    </role>
+    <role name="GROUND">
+        <component indicator="BARE" word="LEFT, RIGHT" map_param="column">
+            <rolegroup> <!-- Rolegroups are an OR clause for sets of roles. They are optional.-->
+                <role name="MOD">
+                    <component indicator="F" word="TOP, BOTTOM" map_param="row"/>
+                </role>
+            </rolegroup>
+            <rolegroup>
+                <role name="FAKE">
+                    "Plain role value"
+                </role>
+            </rolegroup>
+        </component>
+        <!-- alternative to the above component -->
+        <component indicator="BARE" word="CENTER, MIDDLE" map_param="column, row"/>
+    </role>
+</component>
+
+    <!-- Verbal move command.
+    Sample forms:
+        Put 'X' in top-left
+        Place 'O' in the center
+
+        WIP
+        'X' to the center
+-->
+<command name="MAKE_MOVE">
+    <component indicator="SPEECHACT" type="SA_REQUEST">
+        <role name="CONTENT">
+            <component indicator="F" type="PUT" word="PUT, PLACE">
+                <role name="RESULT">
+                    <component from_id="in_comp"/>
+                </role>
+            </component>
+        </role>
+    </component>
+</command>
+
+</commands>

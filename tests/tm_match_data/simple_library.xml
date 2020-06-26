@@ -1,0 +1,26 @@
+<!-- A library of simple commands -->
+<commands>
+
+<!--
+    This command covers statements about men eating apples.
+    It is as specific as possible.
+-->
+<command name="EAT_APPLE">
+    <component indicator="SPEECHACT" type="SA_TELL">
+        <role name="CONTENT">
+
+            <component indicator="F" type="EAT" word="EAT" map_param="verb">
+                <role name="AGENT">
+                    <component type="MALE-PERSON" word="MAN" map_param="agent"/>
+                </role>
+                <role name="AFFECTED">
+                    <component type="FRUIT" word="APPLE" map_param="meal"/>
+                </role>
+            </component>
+
+        </role>
+    </component>
+</command>
+
+
+</commands>

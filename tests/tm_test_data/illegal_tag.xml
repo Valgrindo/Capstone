@@ -1,0 +1,9 @@
+<!-- Test for an error when an illegal tag appears at the top level.-->
+
+<commands>
+
+    <illegal>
+
+    </illegal>
+
+</commands>
