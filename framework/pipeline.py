@@ -18,6 +18,9 @@ import inspect
 from semantic_tools.template_manager import TemplateManager
 from command_dispatch.command_dispatcher import CommandDispatcher, MappingType
 
+# The pipeline
+from speech_recognition.speech_recognizer import SpeechTranscriber, Until
+
 CONFIGURATION = "configuration.json"  # Expected name and location of the config file.
 CONF_TEMPLATES = "template_lib"
 CONF_DISPATCH = "dispatch_map"
@@ -35,7 +38,55 @@ class Pipeline:
     """
     A singleton pipeline containing all the configuration set up by the host application.
     """
-    pass
+
+    class __Pipeline:
+        """
+        Hide the implementation of the pipeline, only exposing the Singleton
+        """
+
+        def __init__(self):
+            """
+            Initialize all the components of the pipeline.
+            """
+            # First, verify that config is present.
+            if not isfile(CONFIGURATION):
+                raise ValueError(f'Configuration file ./{CONFIGURATION} not found.')
+
+            with open(CONFIGURATION, 'r') as fp:
+                # There will be an error if something is wrong.
+                config = json.load(fp)
+                validate_framework_state(config)
+
+            # The framework is all set. Load the components.
+            self._speech = SpeechTranscriber()
+            self._tm = TemplateManager(config[CONF_TEMPLATES])
+            self._cd = CommandDispatcher(config[CONF_DISPATCH])
+
+        def listen(self, until: Until = None) -> Union[NoReturn, Dict[str, str]]:
+            """
+            Main method of interaction exposed by the pipeline. Initiates a listening sequence with an optional
+            condition, transcribes the audio, matches text to the template library, and executes an appropriate
+            command.
+            :param until: An Until condition for listening.
+            :return: None for INVOKE Commands, data dictionary for GET commands.
+            """
+            raise NotImplementedError("pipeline.listen()")
+
+    __pipeline = None
+
+    @staticmethod
+    def get_pipeline():
+        """
+        Retrieve a reference to the shared Pipeline instance.
+        :return: A Pipeline
+        """
+        if Pipeline.__pipeline is None:
+            # Create the shared instance upon initialization.
+            Pipeline.__pipeline = Pipeline.__Pipeline()
+            return Pipeline.__pipeline
+        else:
+            # Return a reference to the shared instance.
+            return Pipeline.__pipeline
 
 
 def validate_framework_state(config: Dict[str, str]) -> bool:
