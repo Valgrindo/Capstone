@@ -16,12 +16,13 @@ import importlib.util
 import inspect
 
 from semantic_tools.template_manager import TemplateManager
-from command_dispatch.command_dispatcher import CommandDispatcher
+from command_dispatch.command_dispatcher import CommandDispatcher, MappingType
 
 CONFIGURATION = "configuration.json"  # Expected name and location of the config file.
 CONF_TEMPLATES = "template_lib"
 CONF_DISPATCH = "dispatch_map"
 TUTORIAL = "tutorial.txt"
+
 USAGE = """pipeline.py [-h] [-v]
 
 optional arguments:
@@ -57,6 +58,21 @@ def validate_framework_state(config: Dict[str, str]) -> bool:
         # in the files. The next step is to make sure that the methods referenced by the dispatcher exist
         # and are accessible
         for desc in cd:
+            # First, we must validate that the referenced command:
+            # 1) Exists
+            if desc.name not in tm.command_signatures:
+                raise ValueError(f'No command template named {desc.name}')
+
+            # 2) Binds the parameters specified in the mapping.
+            for arg in desc.args:
+                if arg not in tm.command_signatures[desc.name]:
+                    raise ValueError(f'Command template {desc.name} does not map argument "{arg}".')
+
+            # If this is a get command, then all requirements are satisfied.
+            if desc.type is MappingType.GET:
+                continue
+
+            # For INVOKE commands, validate that all required functions are accessible.
             if hasattr(desc, "module"):
                 if importlib.util.find_spec(desc.module) is None:
                     raise ValueError(f'Module {desc.module} for command {desc.name} not found.')
@@ -94,6 +110,7 @@ def validate_framework_state(config: Dict[str, str]) -> bool:
             for arg in desc.args:
                 if arg not in spec:
                     raise ValueError(f'Unexpected argument {arg} for {desc.method}.')
+
     except Exception as e:
         if isinstance(e, ValueError):
             raise e  # Simply rethrow

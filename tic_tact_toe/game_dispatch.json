@@ -1,6 +1,6 @@
 {
   "templates": [
-    "game_templates.xml"
+    "command_templates"
   ],
   "commands": [
     {
@@ -10,6 +10,11 @@
       "module": "player",
       "class": "Player",
       "method": "take_turn"
+    },
+    {
+      "name": "GET_MOVE_LOC",
+      "type": "GET",
+      "args": ["row", "col"]
     }
   ]
 }

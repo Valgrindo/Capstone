@@ -31,6 +31,22 @@ class Command:
         self.template = []  # type: List[LogicalForm]
         self.bound_params = {}  # type: Dict[str: str] # This will be populated with all params bound in the LF tree.
 
+    @property
+    def signature(self) -> Optional[Tuple[str, Set[str]]]:
+        """
+        Get this Command's signature -- a tuple of the name and bound parameter names.
+        :return:
+        """
+        # Return nothing for uninitialized commands.
+        if self.name is None or not self.template:
+            return None
+
+        params = set()
+        for template in self.template:
+            params = params.union(template.bindings)
+
+        return self.name, params
+
     def __str__(self):
         return f'<command {self.name} -> {self.bound_params}/>'
 
@@ -122,6 +138,14 @@ class TemplateManager:
             for lf in command.template:
                 if not lf.resolved:
                     lf.resolve(self._unresolved_comps)
+
+    @property
+    def command_signatures(self) -> Dict[str, Set[str]]:
+        """
+        Iterate over a list of command names and bound arguments within this manager.
+        :return:
+        """
+        return {comm.name: comm.signature[1] for comm in self._parsed_commands.values()}
 
     def match(self, lf: LogicalForm) -> Optional[Command]:
         """

@@ -14,7 +14,8 @@
         <!-- Command can be either a statement or a request -->
         <component indicator="SPEECHACT" type="SA_TELL, SA_REQUEST">
             <role name="CONTENT">
-                # TODO
+                <!-- Temporary hack so that the framework validates -->
+                <component map_param="board"/>
             </role>
         </component>
     </command>

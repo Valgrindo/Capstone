@@ -61,6 +61,21 @@ class LogicalForm:
             # SPEECHACTs have a CONTENT role, a PUT has AGENT, AFFECTED, and some more.
             self.roles = [{}]  # type: List[Dict[str: List[LogicalForm.Component]]]
 
+        @property
+        def bound_params(self) -> Set[str]:
+            """
+            Get the set of all parameters bound by this Component and all its children.
+            :return:
+            """
+            result = set(self.param_mapping.keys())
+
+            for rg in self.roles:
+                for rcs in rg.values():
+                    for comp in rcs:
+                        result = result.union(comp.bound_params)
+
+            return set(result)
+
         def _move(self, other):
             """
             Copy the data from another Component into this one. Inspired by C++ move semantics.
@@ -172,6 +187,14 @@ class LogicalForm:
 
     def __repr__(self):
         return self.__str__()
+
+    @property
+    def bindings(self) -> Set[str]:
+        """
+        Get the set of parameters bound by this LogicalForm.
+        :return:
+        """
+        return self._root.bound_params
 
     """
     Matching

@@ -128,7 +128,8 @@ class CommandDispatcher:
             if isdir(item) and any(not f.endswith(XML_EXT) for f in listdir(item)):
                 raise CommandDispatcher.DispatchMapException(f"Found non-{XML_EXT} files in template directory {item}")
 
-            to_read = [item] if isfile(item) else listdir(item)
+            # If the templates are a directory, prepend the context path to all file names
+            to_read = [item] if isfile(item) else list(map(lambda x: join(item, x), listdir(item)))
 
             # For every source file, read all available command names.
             for file in to_read:
