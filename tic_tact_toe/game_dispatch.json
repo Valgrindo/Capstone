@@ -4,12 +4,10 @@
   ],
   "commands": [
     {
-      "name": "TAKE_TURN",
+      "name": "REPLAY_GAME",
       "type": "INVOKE",
-      "args": ["board"],
-      "module": "player",
-      "class": "Player",
-      "method": "take_turn"
+      "module": "tic_tact_toe",
+      "method": "replay"
     },
     {
       "name": "GET_MOVE_LOC",

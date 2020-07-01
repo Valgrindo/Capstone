@@ -2,24 +2,30 @@
 
 <commands>
 
-    <!-- Accepts sentences that denote a location on a 3x3 Tic Tac Toe board.
-        Expected forms:
-            {X | O} {on | in | into} {top | bottom} {left | right}
-            {X | O} {on | in | into} center
-
-        Binds two parameters representing the specified placement.
+    <!--
+    Some INVOKE commands for Tic Tac Toe
     -->
-    <command name="TAKE_TURN">
-
-        <!-- Command can be either a statement or a request -->
-        <component indicator="SPEECHACT" type="SA_TELL, SA_REQUEST">
+    <command name="REPLAY_GAME">
+        <component indicator="SPEECHACT" type="SA_REQUEST, SA_IDENTIFY">
             <role name="CONTENT">
-                <!-- Temporary hack so that the framework validates -->
-                <component map_param="board"/>
+                <!-- Forms like "Start a new game" -->
+                <component type="START">
+                    <role name="NEUTRAL">
+                        <component from_id="NEW_GAME"/>
+                    </role>
+                </component>
+
+                <!-- Forms like "new game" -->
+                <component from_id="NEW_GAME"/>
             </role>
         </component>
     </command>
 
+    <!-- External NEW GAME component -->
+    <component id="NEW_GAME" word="GAME">
+        <role name="MOD">
+            <component type="NOVELTY-VAL"/>
+        </role>
+    </component>
 
-    <!-- Other commands would go here -->
 </commands>

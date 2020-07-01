@@ -12,6 +12,10 @@ from player import Player, Bot
 
 
 def main():
+    print("Welcome to Tic Tac Toe!\n"
+          "Recognized voice commands:\n"
+          "\tNew game -- restarts the game\n"
+          "\texit     -- shuts down the program\n")
     players = input('Enter number of players {1 or 2}: ')
 
     try:
@@ -50,7 +54,13 @@ def main():
             break
         turn = (turn + 1) % 2
 
-    # TODO Replay option.
+
+def replay():
+    """
+    Restart the game.
+    :return:
+    """
+    main()
 
 
 if __name__ == '__main__':

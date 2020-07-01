@@ -7,7 +7,7 @@
     "API_KEY": "AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA"
   },
   "recording": {
-    "default_timeout": 10,
+    "default_timeout": 30,
     "chunk": 1024,
     "format": "paInt16",
     "channels": 2,

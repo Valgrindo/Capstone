@@ -14,6 +14,8 @@ from bs4 import BeautifulSoup
 from typing import *
 from enum import Enum
 
+from semantic_tools.template_manager import Command
+
 TEMPLATE_KEY = "templates"  # JSON dictionary key for template source listing
 COMMAND_KEY = "commands"    # JSON dictionary key for mapping description listing
 CMD_NAME_KEY = "name"       # JSON dictionary key for command name
@@ -77,11 +79,8 @@ class CommandDispatcher:
                         raise CommandDispatcher.DispatchMapException(f'Missing required {field} key for INVOKE mapping.')
                     setattr(self, field, data[field])  # Dynamically create the relevant fields
 
-                if "args" in data:
-                    self.args = data["args"]  # Args are optional for invokes
-                if "class" in data:
-                    self.class_ = data["class"]  # Class is optional for invokes
-
+                self.args = [] if "args" not in data else data["args"]
+                self.class_ = None if "class" not in data else data["class"]
             else:
                 raise CommandDispatcher.DispatchMapException(f'Invalid command type {data["type"]}')
 
@@ -170,6 +169,51 @@ class CommandDispatcher:
         """
         for mapping in self._mappings.values():
             yield mapping
+
+    @property
+    def modules(self):
+        """
+        An iterator over module names required for the dispatcher.
+        :return:
+        """
+        for desc in self._mappings.values():
+            if hasattr(desc, 'module'):
+                yield desc.module
+            else:
+                continue
+
+    def dispatch(self, command: Command, modules: Dict[str, Any] = None) -> Union[Dict[str, str], Optional[Any]]:
+        """
+        Given a command, execute it using stored descriptions.
+        :param command: A Command instance.
+        :param modules: A dictionary of loaded modules.
+        :return: The output of the invoked function call if there was any OR the GET mapping.
+        """
+        # Check that the command is actually mapped. This should never happen due to startup validation,
+        # but defencive programming is good.
+        if command.name not in self._mappings:
+            raise ValueError(f'No mappings found for command "{command.name}"')
+
+        desc = self._mappings[command.name]
+        if desc.type is MappingType.GET:
+            # A GET command needs no invocation, simply return the bound parameters.
+            return command.bound_params
+
+        if desc.module not in modules:
+            raise ValueError(f'Required module {desc.module} not found.')
+
+        module = modules[desc.module]
+        # To execute the command we need to perform the following steps:
+        # 1) Load the module -- provided by pipeline to avoid duplicating work.
+        # 2) Access the module/class method
+        # 3) Invoke the method using parameters bound by the command.from
+        func_ref = module if desc.class_ is None else getattr(module, desc.class_)
+        func = getattr(func_ref, desc.method)
+
+        # The call
+        res = func(**command.bound_params)
+
+        return res
 
 
 if __name__ == '__main__':

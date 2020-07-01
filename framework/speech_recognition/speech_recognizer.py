@@ -18,6 +18,10 @@ from shutil import rmtree
 import keyboard
 import json
 from collections import namedtuple
+from logging import debug
+from framework.until import Until
+from os.path import dirname, join
+from framework.until import RecordStatus
 
 from google.cloud.speech_v1p1beta1 import enums
 
@@ -28,29 +32,7 @@ from pydub import AudioSegment
 import requests
 import base64
 
-DEFAULT_CONFIG_NAME = 'configuration.json'
-
-
-class Until:
-    """
-    An abstraction that makes it convenient to pass predicates to SpeechTranscriber listen() method.
-    """
-
-    def __init__(self, condition: Callable[[], bool]):
-        self.__condition = condition
-
-    def __call__(self, *args, **kwargs):
-        return self.__condition()
-
-    @staticmethod
-    def time_expires(seconds: int) -> Until:
-        """
-        Create a predicate that 'expires' after a given number of seconds elapses.
-        :param seconds: A whole number of seconds.
-        :return: An 'until' predicate
-        """
-        start = time()
-        return Until(lambda: time() - start > seconds)
+DEFAULT_CONFIG_NAME = join(dirname(__file__), 'configuration.json')
 
 
 class SpeechTranscriber:
@@ -124,16 +106,27 @@ class SpeechTranscriber:
                         input=True,
                         frames_per_buffer=self._recording.chunk)
 
+        debug('Awaiting recording.')
         frames = []  # Audio frame storage
-        start_time = time()
-        while not until():
+        start_time = time()  # Default timeout timer
+
+        while until() is RecordStatus.AWAIT:
+            now = time()
+            # Wait until we are clear to begin recording.
+            # It the wait it too long, throw an error.
+            if (now - start_time) > self._recording.default_timeout:
+                debug('Recording timeout while AWAIT')
+                raise ValueError(f'Recording timeout while AWAIT')
+
+        debug('Begin recording.')
+        while until() is RecordStatus.RECORD:
             data = stream.read(self._recording.chunk)
             frames.append(data)
             now = time()
             if (now - start_time) > self._recording.default_timeout:
-                print(' Recording timeout.')
+                debug('Recording timeout.')
                 break
-        print('Recording over!')
+        debug('Recording over!')
 
         stream.stop_stream()
         stream.close()
@@ -184,9 +177,8 @@ class SpeechTranscriber:
         del config
         rmtree(tmp_dir_name)
 
-        return result
-
-    # This section contains several predicate factories for convenient use with listen()
+        debug(f'Recognition result: {result}')
+        return result['results'][0]['alternatives'][0]['transcript']
 
 
 if __name__ == '__main__':

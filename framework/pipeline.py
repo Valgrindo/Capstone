@@ -14,14 +14,17 @@ import json
 import argparse
 import importlib.util
 import inspect
+from logging import debug
+from importlib import import_module
 
 from semantic_tools.template_manager import TemplateManager
+from semantic_tools.parser import TripsAPI
 from command_dispatch.command_dispatcher import CommandDispatcher, MappingType
 
 # The pipeline
 from speech_recognition.speech_recognizer import SpeechTranscriber, Until
 
-CONFIGURATION = "configuration.json"  # Expected name and location of the config file.
+CONFIGURATION = "pipeline_config.json"  # Expected name and location of the config file.
 CONF_TEMPLATES = "template_lib"
 CONF_DISPATCH = "dispatch_map"
 TUTORIAL = "tutorial.txt"
@@ -38,6 +41,8 @@ class Pipeline:
     """
     A singleton pipeline containing all the configuration set up by the host application.
     """
+
+    __pipeline = None
 
     class __Pipeline:
         """
@@ -59,20 +64,59 @@ class Pipeline:
 
             # The framework is all set. Load the components.
             self._speech = SpeechTranscriber()
+            self._parser = TripsAPI()
             self._tm = TemplateManager(config[CONF_TEMPLATES])
             self._cd = CommandDispatcher(config[CONF_DISPATCH])
 
-        def listen(self, until: Until = None) -> Union[NoReturn, Dict[str, str]]:
+            # Load all the required modules and store them for later reference.
+            self._modules = {}
+            for mod in self._cd.modules:
+                self._modules[mod] = import_module(mod)
+
+        def listen(self, until: Until, for_command: str = None) -> Tuple[bool, Union[Dict[str, str], Optional[Any]]]:
             """
             Main method of interaction exposed by the pipeline. Initiates a listening sequence with an optional
             condition, transcribes the audio, matches text to the template library, and executes an appropriate
             command.
             :param until: An Until condition for listening.
-            :return: None for INVOKE Commands, data dictionary for GET commands.
+            :param for_command: A name of an expected command. In not provided, any matched command is accepted.
+            :return: A boolean indicator whether any command was matched and the result of command execution.
             """
-            raise NotImplementedError("pipeline.listen()")
+            # TODO: Since this instance is shared in the program, is there ANY point in spawning a thread
+            #  for performance?
+            result = None
+            success = False
+            try:
+                # First, listen to the user's voice until the provided condition is met and transcribe it.
+                utterance = self._speech.listen(until)
+                debug(f'User utterance: {utterance}')
 
-    __pipeline = None
+                # Next, we parse the utterance into a logical form.
+                lf = self._parser.parse(utterance)
+
+                # Next, match it against the template library
+                command = self._tm.match(lf)
+                debug(f'Matched command: {command.name}')
+
+                # No command was matched.
+                if command is None:
+                    return success, result
+
+                # If the programmer expects a specific command to happen, verify.
+                if for_command is not None and command.name != for_command:
+                    return success, result
+
+                # This will do one of the following:
+                # 1) Yield the parameters bound by a GET command
+                # 2) Yield the returns of the invoked function
+                # 3) Raise an error indicating something bad happened.
+                result = self._cd.dispatch(command, self._modules)
+                success = True
+            except Exception as e:
+                success = False
+                debug(f'Pipeline error: {e}')
+
+            return success, result
 
     @staticmethod
     def get_pipeline():
@@ -153,7 +197,8 @@ def validate_framework_state(config: Dict[str, str]) -> bool:
 
             # Finally, check if the function actually expects the arguments specified in the description.
             spec = inspect.signature(func).parameters.copy()
-            del spec['self']
+            if 'self' in spec:
+                del spec['self']
             if len(spec) != len(desc.args):
                 raise ValueError(f'Argument count mismatch for {desc.method}: expected {len(desc.args)}, but got '
                                  f'{len(spec)}.')
@@ -179,6 +224,7 @@ mappings from.
 if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser(usage=USAGE, add_help=False)
+    arg_parser.add_argument("config", help="path to pipeline configuration file.")
     arg_parser.add_argument("-v", "--validate", action="store_true",
                             help="Validate all framework components.")
     arg_parser.add_argument("-h", "--help", action="store_true",
@@ -201,12 +247,12 @@ if __name__ == '__main__':
     # Validation was selected, proceed.
 
     # First, check that the config file exists.
-    if not isfile(CONFIGURATION):
-        print(f'Configuration file ./{CONFIGURATION} not found.')
+    if not isfile(args.config):
+        print(f'Configuration file ./{args.config} not found.')
         exit(1)
 
     try:
-        with open(CONFIGURATION, 'r') as fp:
+        with open(args.config, 'r') as fp:
             conf_obj = json.load(fp)
 
         framework_state = validate_framework_state(conf_obj)
