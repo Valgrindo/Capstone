@@ -41,9 +41,11 @@ class Player:
         :param board: The current game board state. Gets updated.
         :return: None
         """
-        print(f'Move for {self}. Press and hold SPACE to record when ready.')
+        print(f'> Move for {self}. Press and hold SPACE to record when ready.')
         while True:
-            success, move_data = self.pipeline.listen(until=Until.press_and_release('space'))
+            print('Awaiting command...')
+            success, utt, move_data = self.pipeline.listen(until=Until.press_and_release('space'))
+            print(f'\n\tYou said: {utt}')
             if not success:
                 print(f'\tYour command was not recognized. Please, try again.')
                 continue
@@ -57,7 +59,7 @@ class Player:
                 to_apply = Player.row_map[move_loc[0]], Player.col_map[move_loc[1]]
 
                 if board[to_apply] is not None:
-                    print('\n\tAttempt to move on a taken space. Try again.')
+                    print('\tAttempt to move on a taken space. Try again.')
                     continue
                 # Move was valid. Apply it.
                 board[to_apply] = self.piece

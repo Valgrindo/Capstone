@@ -28,4 +28,16 @@
         </role>
     </component>
 
+    <!--
+        Exit the program. Recognized forms:
+        {Leave | exit | depart ...} [program]
+    -->
+    <command name="EXIT">
+        <component indicator="SPEECHACT" type="SA_REQUEST">
+            <role name="CONTENT">
+                <component type="DEPART, LEAVE-BEHIND"/>
+            </role>
+        </component>
+    </command>
+
 </commands>

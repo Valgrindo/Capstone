@@ -13,6 +13,17 @@
       "name": "GET_MOVE_LOC",
       "type": "GET",
       "args": ["row", "col"]
+    },
+    {
+      "name": "GAME_MODE",
+      "type": "GET",
+      "args": ["number"]
+    },
+    {
+      "name": "EXIT",
+      "type": "INVOKE",
+      "module": "tic_tact_toe",
+      "method": "game_over"
     }
   ]
 }

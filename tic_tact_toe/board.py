@@ -93,7 +93,7 @@ class Board:
         :return:
         """
         div = '-' * (BOARD_EDGE * 4) + '-\n'
-        result = ''
+        result = div
         for row in self.__state:
             for p in row:
                 result += f'| {" " if p is None else p} '

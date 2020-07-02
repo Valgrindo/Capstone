@@ -73,7 +73,8 @@ class Pipeline:
             for mod in self._cd.modules:
                 self._modules[mod] = import_module(mod)
 
-        def listen(self, until: Until, for_command: str = None) -> Tuple[bool, Union[Dict[str, str], Optional[Any]]]:
+        def listen(self, until: Until, for_command: str = None) -> \
+                Tuple[bool, str, Union[Dict[str, str], Optional[Any]]]:
             """
             Main method of interaction exposed by the pipeline. Initiates a listening sequence with an optional
             condition, transcribes the audio, matches text to the template library, and executes an appropriate
@@ -86,6 +87,7 @@ class Pipeline:
             #  for performance?
             result = None
             success = False
+            utterance = None
             try:
                 # First, listen to the user's voice until the provided condition is met and transcribe it.
                 utterance = self._speech.listen(until)
@@ -100,11 +102,11 @@ class Pipeline:
 
                 # No command was matched.
                 if command is None:
-                    return success, result
+                    return success, utterance, result
 
                 # If the programmer expects a specific command to happen, verify.
                 if for_command is not None and command.name != for_command:
-                    return success, result
+                    return success, utterance, result
 
                 # This will do one of the following:
                 # 1) Yield the parameters bound by a GET command
@@ -116,7 +118,7 @@ class Pipeline:
                 success = False
                 debug(f'Pipeline error: {e}')
 
-            return success, result
+            return success, utterance, result
 
     @staticmethod
     def get_pipeline():
