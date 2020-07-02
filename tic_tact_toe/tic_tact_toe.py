@@ -31,27 +31,24 @@ def main():
     players = None
     while True:
         print(f'> Play single-player or multi-player?\n{AWAIT_COMMAND}')
-        success, utt, players = pipeline.listen(Until.press_and_release('space'), for_command='GAME_MODE')
+        success, utt, result = pipeline.listen(Until.press_and_release('space'), for_command='GAME_MODE')
         print(f'\nYou said: {utt}')
         if not success:
             print(f'Command not recognized.')
             continue
-        if players is None or 'number' not in players:
+        if result is None or 'number' not in result:
             print('There was an error processing your command. Try again.')
             continue
 
-        if players['number'] == 'single':
+        players = [Player(name='Player 1', piece=GamePiece.CROSS)]
+        if result['number'] == 'SINGLE':
             print('You chose single-player!')
+            players.append(Bot(name='AI', piece=GamePiece.CIRCLE))
         else:
             print('You chose multi-player')
+            players.append(Player(name='Player 2', piece=GamePiece.CIRCLE))
 
         break
-
-    players = [Player(name='Player 1', piece=GamePiece.CROSS)]
-    if players == 1:
-        players.append(Bot(name='AI', piece=GamePiece.CIRCLE))
-    else:
-        players.append(Player(name='Player 2', piece=GamePiece.CIRCLE))
 
     turn = 0
     board = Board()
@@ -61,7 +58,7 @@ def main():
 
         # Request a move and apply it
         try:
-            curr_player.take_turn(board)
+            board = curr_player.take_turn(board)
         except ValueError:
             continue  # Re-try a move
 

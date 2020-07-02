@@ -6,7 +6,8 @@ An abstraction representing a Tic Tac Toe player. Could be human or AI.
 """
 
 from enum import Enum
-from typing import NoReturn
+from typing import *
+from random import shuffle
 
 from board import GamePiece, Board
 
@@ -65,9 +66,26 @@ class Player:
                 board[to_apply] = self.piece
                 break
 
+        return board
+
 
 class Bot(Player):
 
     def take_turn(self, board: Board) -> NoReturn:
-        # TODO Implement an AI to play tic tac toe.
-        pass
+        print(f'> Move for {self}. Computing turn...')
+        children = board.get_children(self.piece)
+
+        best_scores = []  # type: List[Tuple[int, Board]]
+        for cb in children:
+            score = cb.score(self.piece)
+
+            if not best_scores:
+                best_scores.append((score, cb))
+                continue
+            elif score > best_scores[0][0]:
+                best_scores = [(score, cb)]
+            elif score == best_scores[0]:
+                best_scores.append((score, cb))
+
+        shuffle(best_scores)
+        return best_scores[0][1]
