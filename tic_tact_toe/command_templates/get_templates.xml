@@ -1,0 +1,75 @@
+<!-- A set of Tic Tac Toe templates centered around retrieving info from a user -->
+
+<commands>
+
+    <!--
+        Get the row and column of a desired move.
+        Rows are {top | bottom }
+        Columns are {left | right }
+        Recognized forms:
+        {column} {row}
+        center
+    -->
+    <command name="GET_MOVE_LOC">
+
+        <!-- The user could simply say the location -->
+        <component indicator="SPEECHACT" type="SA_IDENTIFY">
+            <role name="CONTENT">
+
+                <!-- Other cells require both row and column specified -->
+                <component word="LEFT, RIGHT, CENTER" map_param="col">
+                    <role name="MOD">
+                        <component word="TOP, BOTTOM, CENTER" map_param="row"/>
+                    </role>
+                </component>
+
+                <!-- Center requires no extra information -->
+                <component word="CENTER, MIDDLE" map_param="row, col"/>
+
+            </role>
+        </component>
+
+        <!-- Account for niche interpretation of "X left" -->
+        <component indicator="SPEECHACT" type="SA_TELL">
+            <role name="CONTENT">
+                <!-- Sentences like "top left" can be interpreted as "top departed" in the past -->
+                <component word="LEAVE" map_param="col">
+                    <role name="TENSE"> PAST </role>
+                    <role name="AGENT">
+                        <component word="TOP, CENTER, MIDDLE, BOTTOM" map_param="row"/>
+                    </role>
+                </component>
+            </role>
+        </component>
+
+    </command>
+
+    <!--
+        A command to get the game mode. Recognizes the following forms:
+         {single | multi } player
+     -->
+    <command name="GAME_MODE">
+
+        <component indicator="SPEECHACT" type="SA_IDENTIFY">
+            <role name="CONTENT">
+                <component word="PLAYER">
+                    <!-- "Single | Multiple players"-->
+                    <rolegroup>
+                        <role name="MOD">
+                            <component type="N-TUPLE-VAL" word="DUAL, SINGLE, MULTIPLE" map_param="number"/>
+                        </role>
+                    </rolegroup>
+                    <!-- Multi(-)player -->
+                    <rolegroup>
+                        <role name="MOD">
+                            <component type="POLY-VAL" word="MULTI-" map_param="number"/>
+                        </role>
+                    </rolegroup>
+
+                </component>
+            </role>
+        </component>
+
+    </command>
+
+</commands>
