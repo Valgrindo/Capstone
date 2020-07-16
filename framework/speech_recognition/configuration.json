@@ -4,7 +4,7 @@
   "URL": "https://speech.googleapis.com/v1/speech:recognize",
   "authentication": {
     "service_account_var": "GOOGLE_APPLICATION_CREDENTIALS",
-    "API_KEY": "AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA"
+    "API_KEY": ""
   },
   "recording": {
     "default_timeout": 30,

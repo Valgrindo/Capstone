@@ -69,6 +69,8 @@ class SpeechTranscriber:
 
                 self._authentication = namedtuple('authentication', ['service_account_var', 'api_key'])
                 self._authentication.api_key = conf_obj["authentication"]['API_KEY']
+                if not self._authentication.api_key:
+                    raise ValueError('Missing Google Cloud Speech-to-Text API Key. Please see README for details.')
 
                 self._recording = namedtuple('recording', ['default_timeout', 'chunk', 'format', 'channels',
                                                            'rate', 'wave_filename', 'buffer_name'])

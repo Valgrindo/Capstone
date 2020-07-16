@@ -148,6 +148,7 @@ def validate_framework_state(config: Dict[str, str]) -> bool:
             raise ValueError(f'Missing required {key} configuration key.')
 
     try:
+        sr = SpeechTranscriber()  # The act of instantiating this validates everything related to the transcriber.
         tm = TemplateManager(config[CONF_TEMPLATES])
         cd = CommandDispatcher(config[CONF_DISPATCH])
 
