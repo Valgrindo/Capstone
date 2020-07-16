@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 from typing import *
 from enum import Enum
 
-from semantic_tools.template_manager import Command
+from template_manager import Command
 
 TEMPLATE_KEY = "templates"  # JSON dictionary key for template source listing
 COMMAND_KEY = "commands"    # JSON dictionary key for mapping description listing

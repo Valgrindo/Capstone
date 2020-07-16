@@ -10,13 +10,13 @@
     "default_timeout": 30,
     "chunk": 1024,
     "format": "paInt16",
-    "channels": 2,
+    "channels": 1,
     "rate": 44100,
     "wave_filename": "output.wav",
     "buffer_name": "Recording"
   },
   "transcription": {
     "language": "en-US",
-    "encoding": "mp3"
+    "encoding": "linear16"
   }
 }

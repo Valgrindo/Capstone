@@ -20,6 +20,9 @@ class RecordStatus(Enum):
     RECORD = 1,
     STOP = 2
 
+    def __eq__(self, other):
+        return self.name == other.name and self.value == other.value
+
 
 class Until:
     """

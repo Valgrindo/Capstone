@@ -11,8 +11,7 @@ from random import shuffle
 
 from board import GamePiece, Board
 
-from framework.pipeline import Pipeline
-from framework.until import Until
+from framework import Pipeline, Until
 
 
 class PlayerKind(Enum):

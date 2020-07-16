@@ -14,15 +14,19 @@ import json
 import argparse
 import importlib.util
 import inspect
+import datetime
 from logging import debug
 from importlib import import_module
 
-from semantic_tools.template_manager import TemplateManager
-from semantic_tools.parser import TripsAPI
-from command_dispatch.command_dispatcher import CommandDispatcher, MappingType
+from template_manager import TemplateManager
+from lf_parser import TripsAPI
+from command_dispatcher import CommandDispatcher, MappingType
+from speech_recognizer import SpeechTranscriber, Until
 
-# The pipeline
-from speech_recognition.speech_recognizer import SpeechTranscriber, Until
+import logging
+from logging import debug
+LOG_FILENAME = 'pipeline.log'
+logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 
 CONFIGURATION = "pipeline_config.json"  # Expected name and location of the config file.
 CONF_TEMPLATES = "template_lib"
@@ -135,23 +139,35 @@ class Pipeline:
             return Pipeline.__pipeline
 
 
-def validate_framework_state(config: Dict[str, str]) -> bool:
+def validate_framework_state(config: Dict[str, str], log_output=True) -> bool:
     """
     Verify that the framework is functional in its current state.
     :param config: A JSON configuration object.
+    :param log_output: If true, the validation results will be storeg in a log. Otherwise, printed to stdout.
     :return:
     """
+    out_fn = debug if log_output else print
+    section = lambda header: out_fn(f'\n{"="*25}\n{header}\n{"="*25}')
+
+    out_fn(f'\n{datetime.datetime.now()}')
+    section('FRAMEWORK CONFIGURATION')
     # Configuration contains the template library and the dispatch mapping.
     req_keys = [CONF_TEMPLATES, CONF_DISPATCH]
     for key in req_keys:
         if key not in config:
-            raise ValueError(f'Missing required {key} configuration key.')
+            raise ValueError(f'\tMissing required {key} configuration key.')
+        out_fn(f'+\tRequired key {key}')
 
     try:
+        section('PIPELINE STAGES')
         sr = SpeechTranscriber()  # The act of instantiating this validates everything related to the transcriber.
+        out_fn(f'+\t Speech Transcriber')
         tm = TemplateManager(config[CONF_TEMPLATES])
+        out_fn(f'+\t Template Manager')
         cd = CommandDispatcher(config[CONF_DISPATCH])
+        out_fn(f'+\t Command Dispatcher')
 
+        section('COMMANDS')
         # If the creation of template manager and command dispatcher succeeded, then there were no syntactic errors
         # in the files. The next step is to make sure that the methods referenced by the dispatcher exist
         # and are accessible
@@ -168,6 +184,7 @@ def validate_framework_state(config: Dict[str, str]) -> bool:
 
             # If this is a get command, then all requirements are satisfied.
             if desc.type is MappingType.GET:
+                out_fn(f'+\t Command: {desc.name}')
                 continue
 
             # For INVOKE commands, validate that all required functions are accessible.
@@ -175,8 +192,6 @@ def validate_framework_state(config: Dict[str, str]) -> bool:
                 if importlib.util.find_spec(desc.module) is None:
                     raise ValueError(f'Module {desc.module} for command {desc.name} not found.')
 
-            # TODO: It would be fairly trivial to check functions if I were to laod the module.
-            # TODO: Any reason to avoid doing that?
             # Check that the module exists
             mod = importlib.import_module(desc.module)
 
@@ -209,6 +224,7 @@ def validate_framework_state(config: Dict[str, str]) -> bool:
             for arg in desc.args:
                 if arg not in spec:
                     raise ValueError(f'Unexpected argument {arg} for {desc.method}.')
+            out_fn(f'+\t Command: {desc.name}')
 
     except Exception as e:
         if isinstance(e, ValueError):
@@ -258,7 +274,7 @@ if __name__ == '__main__':
         with open(args.config, 'r') as fp:
             conf_obj = json.load(fp)
 
-        framework_state = validate_framework_state(conf_obj)
+        framework_state = validate_framework_state(conf_obj, log_output=False)
     except json.decoder.JSONDecodeError as de:
         print(f'Failed to parse configuration file: {de}')
         exit(1)
@@ -267,5 +283,5 @@ if __name__ == '__main__':
         exit(1)
 
     # If made it to the end with no errors, all the framework components are ready to go.
-    print('Framework is functional!')
+    print('\nFramework is FUNCTIONAL!')
 
