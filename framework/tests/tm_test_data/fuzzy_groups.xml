@@ -1,0 +1,24 @@
+<!-- Test that a template is parsed when it utilizes multiple GROUP and FUZZY components. -->
+
+<commands>
+    <command name="TEST">
+        <component indicator="I1" type="T1" word="W1">
+            <!-- First and last roles are fizzy branches that group content -->
+            <role name="R1">
+                <component type="T1.1" group="G1.1" fuzzy="True"/>
+            </role>
+            <!-- Role 2 is two nested grouping components -->
+            <role name="R2">
+                <component indicator="I2.1" type="T2.1" word="W2.1" group="G2.1">
+                    <role name="R2.1">
+                        <component indicator="I2.1.1" type="T2.1.1" word="W2.1.1" group="G2.1"/>
+                    </role>
+                </component>
+            </role>
+            <!-- First and last roles are fizzy branches that group content -->
+            <role name="R3">
+                <component type="T3.1" group="G3.1" fuzzy="True"/>
+            </role>
+        </component>
+    </command>
+</commands>

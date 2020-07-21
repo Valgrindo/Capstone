@@ -29,7 +29,8 @@ class Command:
         # A reference to the template defining this command.
         # A list is necessary to accommodate multiple top-level components.
         self.template = []  # type: List[LogicalForm]
-        self.bound_params = {}  # type: Dict[str: str] # This will be populated with all params bound in the LF tree.
+        self.bound_params = {}  # type: Dict[str, str] # This will be populated with all params bound in the LF tree.
+        self.groups = {}  # type: Dict[str, str]
 
     @property
     def signature(self) -> Optional[Tuple[str, Set[str]]]:
@@ -159,9 +160,10 @@ class TemplateManager:
         # a set of AND clauses. Each role node must contain at leas one component, all components being an OR clause.
         for _, c in self._parsed_commands.items():
             for c_lf in c.template:
-                is_match, params = lf.match_template(c_lf)
+                is_match, params, groups = lf.match_template(c_lf)
                 if is_match:
                     c.bound_params = params
+                    c.groups = groups
                     return c
 
         # If we checked all the options under this command and nothing matched, then there is no match.
@@ -187,7 +189,7 @@ if __name__ == '__main__':
 
     # This is not meant to be a dependency of TemplateManager for the sake of decoupling, but it is useful to be able to
     # exercise the manager if command line mode.
-    from parser import TripsAPI
+    from lf_parser import TripsAPI
 
     tm = TemplateManager(args.templates)
     api = TripsAPI()

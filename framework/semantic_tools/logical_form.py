@@ -56,6 +56,9 @@ class LogicalForm:
             self.word = None if not word else [word]
             self.param_mapping = {}  # Storage for parameters which may be bound by some components.
             self._resolved = resolved
+            self.group = ""  # Each component may have exactly one group associated.
+            self.fuzzy = False
+            self.tagged = False
 
             # Optionally, the component may have a set of roles.
             # SPEECHACTs have a CONTENT role, a PUT has AGENT, AFFECTED, and some more.
@@ -88,8 +91,10 @@ class LogicalForm:
             self.comp_type = list(other.comp_type)
             self.word = None if other.word is None else list(other.word)
             self.param_mapping = other.param_mapping
+            self.group = other.group
             self._resolved = other._resolved
             self.roles = other.roles
+            self.fuzzy = other.fuzzy
 
         def __str__(self):
             """
@@ -196,15 +201,45 @@ class LogicalForm:
         """
         return self._root.bound_params
 
+    @staticmethod
+    def _iterate(cmp: Component):
+        """
+        Iterator over the nested structure of a given component.
+        :return:
+        """
+        yield from LogicalForm._iterate_help(cmp, set())
+
+    @staticmethod
+    def _iterate_help(cmp: Component, seen: Set[Component]):
+        """
+        Helper function for the iterator that prevents infinite loops through the tree.
+        :param cmp: Current component.
+        :param seen: Set of seen components
+        :param parent: The immediate parent of this component. Prevents improper up-search.
+        :return:
+        """
+        yield cmp
+        seen.add(cmp)
+
+        for rg in cmp.roles:
+            for or_cmps in rg.values():
+                for c in or_cmps:
+                    # Avoid modifier loops.
+                    if c in seen or isinstance(c, str) or c.tagged:
+                        continue
+
+                    # Only recurse on non-string components
+                    yield from LogicalForm._iterate_help(c, seen)
+
     """
     Matching
     """
-    def match_template(self, lf) -> Tuple[bool, Dict[str, str]]:
+    def match_template(self, lf) -> Tuple[bool, Dict[str, str], Dict[str, str]]:
         """
         Compare this LogicalForm to another one for structural equality.
         :param lf: Other LogicalForm
-        :return: True if the structure and patterns withing the other LogicalForm match this one. False otherwise.
-            Additionally, return a dictionary of parameters bound by the compared LF.
+        :return: True if the structure and patterns within the other LogicalForm match this one. False otherwise.
+            Additionally, return the dictionaries of parameters and groups bound by the compared LF.
         """
         if not isinstance(lf, LogicalForm):
             raise ValueError(f'Expected {LogicalForm} argument, got {type(lf)}.')
@@ -214,21 +249,21 @@ class LogicalForm:
         # If a complete match is achieved from multiple recursive calls, pick the first one and report a runtime
         # warning -- the source of the ambiguity is a poorly written template.
         if bool(self._root) != bool(lf._root):
-            return False, {}
+            return False, {}, {}
 
         if self._root is None and lf._root is None:
-            return True, {}
+            return True, {}, {}
 
         return LogicalForm._compare_help(self._root, lf._root)
 
     @staticmethod
-    def _compare_help(this, other) -> Tuple[bool, Dict[str, str]]:
+    def _compare_help(this, other) -> Tuple[bool, Dict[str, str], Dict[str, str]]:
         """
         Recursive helper function for LF comparison.
         Parameters will be extracted from 'this' using the mappings of 'other'
         :param this: Compared instance.
         :param other: Instance compared to.
-        :return:
+        :return: Tuple[Match success/failure, bound params, bound groups]
         """
         # this and other are expected to be Components at the same level of the tree.
         # Components match if all the following are true:
@@ -242,7 +277,7 @@ class LogicalForm:
         # An equivalent element parsed from a template is a component, since there could be multiple string options
         if isinstance(this, str):
             match = this in other.word
-            return match, {p_name: this for p_name in other.param_mapping.keys()}
+            return match, {p_name: this for p_name in other.param_mapping.keys()}, {}
 
         # Lists share a common element if their intersection iss a nonempty set.
         lst_common = lambda lst_t: bool(set(lst_t[0]).intersection(set(lst_t[1])))
@@ -257,7 +292,25 @@ class LogicalForm:
         if not match:
             # No surface-level match means no need to recurse further.
             # Also no need to return any parameters from this branch.
-            return False, {}
+            return False, {}, {}
+        this.tagged = True
+
+        # If the template specifies a group at this component, gather all explicit words from the sentence subtree.
+        group_data = {}
+        extractor = lambda cmp: cmp if isinstance(cmp, str) else (None if not cmp.word else cmp.word[0])
+        if other.group:
+            group_list = [extractor(cmp) for cmp in LogicalForm._iterate(this)]
+            group_str = ' '.join(list(filter(lambda x: x is not None, group_list)))
+            group_data[other.group] = group_str
+
+        # If the components match and the template one is marked 'fuzzy', then everything nested under this component
+        # is to be accepted 'as-is'.
+        if other.fuzzy:
+            # Return only the parameters bound by this component, if applicable.
+            # Since there can be no structure below, no bindings could be made.
+            binding = {} if not this.word else {k: this.word[0] for k in other.param_mapping.keys()}
+            groups = {} if not other.group else group_data
+            return True, binding, groups
 
         # TODO: Do we need a warning if there were multiple candidate words? Shouldn't be possible.
         # Map the word value stored in this component to parameter names specified by the template.
@@ -281,12 +334,14 @@ class LogicalForm:
         # For each pair of matching rolegroups, recurse on all corresponding components.
         # At least one rolegroup has to match in order for the whole template to match.
         param_set = {}
+        group_set = {}
         one_rg_match = False
         for this_rg, other_rg in check_q:
 
             # Every role must fully match within a rolegroup
             all_match = True
             rg_set = {}  # set of parameters from this set of roles
+            rg_groups = {}  # Set of groups from this set of roles
             for name in this_rg.keys():
                 # Since this RG has been established as a superset of other RG, there may be roles not present
                 # in other. That simply means that the role is a match and no parameters are bound.
@@ -305,17 +360,21 @@ class LogicalForm:
                 for k, v in results[0][1].items():
                     if k not in rg_set:
                         rg_set[k] = v
+                for k, v in results[0][2].items():
+                    if k not in rg_groups:
+                        rg_groups[k] = v
 
             # Stop comparing if we found a matching rolegroup.
             if all_match:
                 one_rg_match = True
                 param_set = rg_set
+                group_set = rg_groups
                 break
 
         # Not a single rolegroup matched from the template.
         # This component is not a match
         if not one_rg_match:
-            return False, {}
+            return False, {}, {}
 
         # At least one rolegroup matched.
         # Add the parameters extracted from the matched rolegroup to the set.
@@ -323,7 +382,12 @@ class LogicalForm:
             if k not in param_map:
                 param_map[k] = v
 
-        return True, param_map
+        # Add the groups extracted from the matched rolegroup to the set.
+        for k, v in group_set.items():
+            if k not in group_data:
+                group_data[k] = v
+
+        return True, param_map, group_data
 
     """
     ID resolution
@@ -449,8 +513,12 @@ class LogicalForm:
         if self._require_id:
             if 'id' not in command_root.attrs:
                 raise CommandTemplateError('Missing required ID')
+        root = LogicalForm.__parse_component(command_root)
+        for cmp in LogicalForm._iterate(root):
+            if cmp.fuzzy and cmp.roles[0]:
+                raise CommandTemplateError(f'Cannot assign structure to fuzzy component {cmp}')
 
-        return LogicalForm.__parse_component(command_root)
+        return root
 
     @staticmethod
     def __parse_role(root: Tag) -> Tuple[str, List[Component]]:
@@ -529,6 +597,11 @@ class LogicalForm:
                 cmp.param_mapping[p] = None  # Values get filled in during template matching.
                 # TODO: Could the dictionary be reduced to a set? Actual mapping happens within LogicalForm
 
+        # If 'group' is specified, then raw words from the entire nested subtree need to be agglomerated into a bound
+        # parameter with the specified name.
+        if 'group' in root.attrs:
+            cmp.group = root.attrs['group'].strip()
+
         # If any of the following 3 attributes are populated, then those specific values are expected of the template.
         # Otherwise, component lists are left empty to signal a wildcard.
         if 'indicator' in root.attrs:
@@ -542,6 +615,10 @@ class LogicalForm:
         else:
             # If the word tag was absent, then it's a wildcard.
             cmp.word = []
+
+        # A fuzzy component permits any structure to be nested within.
+        if 'fuzzy' in root.attrs:
+            cmp.fuzzy = True
 
         # Finally, handle the component's children.
         # The only acceptable children are <role> and <rolegroup> tags.

@@ -1,0 +1,3 @@
+True; "We saw a bunch of really cute puppies"; {"agent":"WE", "object":"PUPPY"}; {"agent":"WE", "object_clause":"PUPPY BUNCH CUTE REALLY", "props_clause": "CUTE REALLY"}
+True; "We saw some really cute puppies"; {"agent":"WE", "object":"PUPPY"}; {"agent":"WE", "object_clause":"PUPPY CUTE REALLY", "props_clause": "CUTE REALLY"}
+True; "Geralt and Jaskir saw many really young cats"; {"object":"CAT"}; {"agent":"GERALT JASKIR", "object_clause":"CAT YOUNG REALLY", "props_clause": "YOUNG REALLY"}

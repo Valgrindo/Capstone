@@ -1,0 +1,27 @@
+<!-- Test that no structure is allowed to be supplied to a fuzzy component -->
+<commands>
+
+<command name="FUZZY_STRUCT">
+    <component indicator="SPEECHACT" type="SA_REQUEST">
+        <role name="CONTENT">
+
+            <component indicator="F" word="SHOW" map_param="verb">
+                <role name="AGENT1">
+                    <component type="PERSON" map_param="agent"/>
+                </role>
+                <role name="NEUTRAL">
+
+                    <component type="FUZZY_COMP" fuzzy="True">
+                        <role name="ILLEGAL">
+                            <component/>
+                        </role>
+                    </component>
+                </role>
+            </component>
+
+        </role>
+    </component>
+</command>
+
+
+</commands>

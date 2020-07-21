@@ -14,8 +14,8 @@ from math import floor
 from enum import Enum
 from json import loads
 
-from semantic_tools.template_manager import TemplateManager
-from semantic_tools.parser import TripsAPI
+from template_manager import TemplateManager
+from lf_parser import TripsAPI
 
 
 class TestMode(Enum):
@@ -207,6 +207,9 @@ def run_match_tests():
         with open(results, 'r') as rfp:
             for test in rfp:
                 data = test.strip().split(';')  # [Test expectation, sentence, Optional param dictionary]
+                if len(data) <= 1 or len(data) >= 5:
+                    print(f'\tInvalid test: {data}')
+                    continue
                 print(f'\t{data[1]} \t\t--> ', end='')
 
                 result = tm.match(api.parse(data[1]))
@@ -223,11 +226,14 @@ def run_match_tests():
                     # Expected and got a match. Must validate the argument dictionary if applicable.
                     got_params = result.bound_params
                     exp_params = loads(data[2])
-                    if got_params == exp_params:
+
+                    got_groups = result.groups
+                    exp_groups = loads(data[3])
+                    if got_params == exp_params and got_groups == exp_groups:
                         print('Correct.')
                         test_success += 1
                     else:
-                        print(f'\nEXPECTED:\n{exp_params}\nGOT:\n{got_params}')
+                        print(f'\nEXPECTED:\n{exp_params, exp_groups}\nGOT:\n{got_params, got_groups}')
 
                 test_count += 1
     proportion = (test_success / test_count) * 100

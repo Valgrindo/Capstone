@@ -1,0 +1,12 @@
+<!-- A command that exercises fuzzy matching -->
+<commands>
+
+<!--
+    Will accept ANY request.
+-->
+<command name="REQUEST">
+    <component indicator="SPEECHACT" type="SA_REQUEST" fuzzy="True" map_param="type"/>
+</command>
+
+
+</commands>

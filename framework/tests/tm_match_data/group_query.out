@@ -1,0 +1,2 @@
+True; "Show me pictures of puppies"; {"verb":"SHOW", "agent":"ME", "group_root": "PICTURE"}; {"query":"PICTURE PUPPY"}
+False; "I want to see pictures of puppies"

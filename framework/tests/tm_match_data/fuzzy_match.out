@@ -1,0 +1,7 @@
+True; "Give me some money."; {}; {}
+True; "Pass me the brush, please."; {}; {}
+True; "Go hiking with me"; {}; {}
+False; "Can I have some cake?"
+False; "My name is John"
+False; "Will you marry me?"
+False; "I like candy."

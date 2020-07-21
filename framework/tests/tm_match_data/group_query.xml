@@ -1,0 +1,32 @@
+<!-- A command that groups a nested portion of a tree into a single parameter -->
+<commands>
+
+<!--
+    This command covers query statements of the form "Show me <subject>"
+    <subject> may be an arbitrary clause that si grouped into one variable.
+-->
+<command name="SHOW_PUPPIES">
+    <component indicator="SPEECHACT" type="SA_REQUEST">
+        <role name="CONTENT">
+
+            <component indicator="F" word="SHOW" map_param="verb">
+                <role name="AGENT1">
+                    <component type="PERSON" map_param="agent"/>
+                </role>
+                <role name="NEUTRAL">
+                    <!-- This component indicates that any concrete words from this level down
+                         is to be agglomerated into one parameter 'query'
+
+                         Additionally, this showcases the attribute 'fuzzy', which allows for the sentence to expand
+                         arbitrarily from the component. It will be considered a match regardless of structure.
+                    -->
+                    <component map_param="group_root" group="query" fuzzy="True"/>
+                </role>
+            </component>
+
+        </role>
+    </component>
+</command>
+
+
+</commands>

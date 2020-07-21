@@ -1,0 +1,54 @@
+<!-- Test that groupings are correctly nested within each other when multiple clauses are present -->
+<commands>
+    <!-- Accepts statements of the form <AGENT> saw <OBJECTS> [<WITH PROPERTIES>] -->
+    <command name="SEE_THAT">
+        <component indicator="SPEECHACT" type="SA_TELL">
+            <role name="CONTENT">
+                <component type="ACTIVE-PERCEPTION" word="SEE">
+
+                    <!-- The structure with formal quantifiers -->
+                    <rolegroup>
+                        <!-- The agent can be anything -->
+                        <role name="EXPERIENCER">
+                            <component from_id="ANY_AGENT"/>
+                        </role>
+
+                        <!-- The seen object structure is in a formal relation -->
+                        <role name="FORMAL">
+                            <component indicator="F" type="MEMBER-RELN">
+                                <role name="GROUND">
+                                    <component from_id="OBJECT_WITH_PROPS"/>
+                                </role>
+                            </component>
+                        </role>
+                    </rolegroup>
+
+                    <!-- The structure without formal quantifiers -->
+                    <rolegroup>
+                        <!-- The agent can be anything -->
+                        <role name="EXPERIENCER">
+                            <component from_id="ANY_AGENT"/>
+                        </role>
+
+                        <!-- The seen object structure is in a formal relation -->
+                        <role name="NEUTRAL">
+                            <component from_id="OBJECT_WITH_PROPS"/>
+                        </role>
+                    </rolegroup>
+
+                </component>
+            </role>
+        </component>
+    </command>
+
+    <!-- External component for an arbitrary agent -->
+    <component id="ANY_AGENT" map_param="agent" group="agent" fuzzy="True"/>
+
+    <!-- External component for object that was observed.
+        Allows arbitrary properties and groups them -->
+    <component id="OBJECT_WITH_PROPS" map_param="object" group="object_clause">
+        <role name="MOD">
+            <component group="props_clause" fuzzy="True"/>
+        </role>
+    </component>
+</commands>

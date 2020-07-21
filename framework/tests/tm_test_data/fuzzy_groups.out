@@ -1,0 +1,15 @@
+<command TEST>
+<component I1 T1 W1>
+|  <rolegroup>
+|  |  <role R1>
+|  |  |  <component * T1.1>
+|  |  <role R2>
+|  |  |  <component I2.1 T2.1 W2.1>
+|  |  |  |  <rolegroup>
+|  |  |  |  |  <role R2.1>
+|  |  |  |  |  |  <component I2.1.1 T2.1.1 W2.1.1>
+|  |  |  |  </rolegroup>
+|  |  <role R3>
+|  |  |  <component * T3.1>
+|  </rolegroup>
+</command>
