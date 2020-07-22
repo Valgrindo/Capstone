@@ -1,0 +1,271 @@
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:Recording over!
+DEBUG:pydub.converter:subprocess.call(['ffmpeg', '-y', '-f', 'wav', '-i', 'C:\\Users\\serge\\AppData\\Local\\Temp\\tmp2wmgxruz', '-f', 'mp3', 'C:\\Users\\serge\\AppData\\Local\\Temp\\tmpzzwqtk0o'])
+DEBUG:pydub.converter:subprocess output: b'ffmpeg version 4.2.2 Copyright (c) 2000-2019 the FFmpeg developers'
+DEBUG:pydub.converter:subprocess output: b'  built with gcc 9.2.1 (GCC) 20200122'
+DEBUG:pydub.converter:subprocess output: b'  configuration: --enable-gpl --enable-version3 --enable-sdl2 --enable-fontconfig --enable-gnutls --enable-iconv --enable-libass --enable-libdav1d --enable-libbluray --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libopus --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libtheora --enable-libtwolame --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libzimg --enable-lzma --enable-zlib --enable-gmp --enable-libvidstab --enable-libvorbis --enable-libvo-amrwbenc --enable-libmysofa --enable-libspeex --enable-libxvid --enable-libaom --enable-libmfx --enable-amf --enable-ffnvcodec --enable-cuvid --enable-d3d11va --enable-nvenc --enable-nvdec --enable-dxva2 --enable-avisynth --enable-libopenmpt'
+DEBUG:pydub.converter:subprocess output: b'  libavutil      56. 31.100 / 56. 31.100'
+DEBUG:pydub.converter:subprocess output: b'  libavcodec     58. 54.100 / 58. 54.100'
+DEBUG:pydub.converter:subprocess output: b'  libavformat    58. 29.100 / 58. 29.100'
+DEBUG:pydub.converter:subprocess output: b'  libavdevice    58.  8.100 / 58.  8.100'
+DEBUG:pydub.converter:subprocess output: b'  libavfilter     7. 57.100 /  7. 57.100'
+DEBUG:pydub.converter:subprocess output: b'  libswscale      5.  5.100 /  5.  5.100'
+DEBUG:pydub.converter:subprocess output: b'  libswresample   3.  5.100 /  3.  5.100'
+DEBUG:pydub.converter:subprocess output: b'  libpostproc    55.  5.100 / 55.  5.100'
+DEBUG:pydub.converter:subprocess output: b'Guessed Channel Layout for Input Stream #0.0 : stereo'
+DEBUG:pydub.converter:subprocess output: b"Input #0, wav, from 'C:\\Users\\serge\\AppData\\Local\\Temp\\tmp2wmgxruz':"
+DEBUG:pydub.converter:subprocess output: b'  Duration: 00:00:02.23, bitrate: 1411 kb/s'
+DEBUG:pydub.converter:subprocess output: b'    Stream #0:0: Audio: pcm_s16le ([1][0][0][0] / 0x0001), 44100 Hz, stereo, s16, 1411 kb/s'
+DEBUG:pydub.converter:subprocess output: b'Stream mapping:'
+DEBUG:pydub.converter:subprocess output: b'  Stream #0:0 -> #0:0 (pcm_s16le (native) -> mp3 (libmp3lame))'
+DEBUG:pydub.converter:subprocess output: b'Press [q] to stop, [?] for help'
+DEBUG:pydub.converter:subprocess output: b"Output #0, mp3, to 'C:\\Users\\serge\\AppData\\Local\\Temp\\tmpzzwqtk0o':"
+DEBUG:pydub.converter:subprocess output: b'  Metadata:'
+DEBUG:pydub.converter:subprocess output: b'    TSSE            : Lavf58.29.100'
+DEBUG:pydub.converter:subprocess output: b'    Stream #0:0: Audio: mp3 (libmp3lame), 44100 Hz, stereo, s16p'
+DEBUG:pydub.converter:subprocess output: b'    Metadata:'
+DEBUG:pydub.converter:subprocess output: b'      encoder         : Lavc58.54.100 libmp3lame'
+DEBUG:pydub.converter:subprocess output: b'size=      36kB time=00:00:02.24 bitrate= 130.3kbits/s speed=77.8x'
+DEBUG:pydub.converter:subprocess output: b'video:0kB audio:36kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.695781%'
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): speech.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://speech.googleapis.com:443 "POST /v1/speech:recognize?key=AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA HTTP/1.1" 200 None
+DEBUG:root:User utterance: single player
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
+DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
+DEBUG:root:Matched command: GAME_MODE
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:Recording over!
+DEBUG:pydub.converter:subprocess.call(['ffmpeg', '-y', '-f', 'wav', '-i', 'C:\\Users\\serge\\AppData\\Local\\Temp\\tmpf0cevxgx', '-f', 'mp3', 'C:\\Users\\serge\\AppData\\Local\\Temp\\tmprk8h3h7d'])
+DEBUG:pydub.converter:subprocess output: b'ffmpeg version 4.2.2 Copyright (c) 2000-2019 the FFmpeg developers'
+DEBUG:pydub.converter:subprocess output: b'  built with gcc 9.2.1 (GCC) 20200122'
+DEBUG:pydub.converter:subprocess output: b'  configuration: --enable-gpl --enable-version3 --enable-sdl2 --enable-fontconfig --enable-gnutls --enable-iconv --enable-libass --enable-libdav1d --enable-libbluray --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libopus --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libtheora --enable-libtwolame --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libzimg --enable-lzma --enable-zlib --enable-gmp --enable-libvidstab --enable-libvorbis --enable-libvo-amrwbenc --enable-libmysofa --enable-libspeex --enable-libxvid --enable-libaom --enable-libmfx --enable-amf --enable-ffnvcodec --enable-cuvid --enable-d3d11va --enable-nvenc --enable-nvdec --enable-dxva2 --enable-avisynth --enable-libopenmpt'
+DEBUG:pydub.converter:subprocess output: b'  libavutil      56. 31.100 / 56. 31.100'
+DEBUG:pydub.converter:subprocess output: b'  libavcodec     58. 54.100 / 58. 54.100'
+DEBUG:pydub.converter:subprocess output: b'  libavformat    58. 29.100 / 58. 29.100'
+DEBUG:pydub.converter:subprocess output: b'  libavdevice    58.  8.100 / 58.  8.100'
+DEBUG:pydub.converter:subprocess output: b'  libavfilter     7. 57.100 /  7. 57.100'
+DEBUG:pydub.converter:subprocess output: b'  libswscale      5.  5.100 /  5.  5.100'
+DEBUG:pydub.converter:subprocess output: b'  libswresample   3.  5.100 /  3.  5.100'
+DEBUG:pydub.converter:subprocess output: b'  libpostproc    55.  5.100 / 55.  5.100'
+DEBUG:pydub.converter:subprocess output: b'Guessed Channel Layout for Input Stream #0.0 : stereo'
+DEBUG:pydub.converter:subprocess output: b"Input #0, wav, from 'C:\\Users\\serge\\AppData\\Local\\Temp\\tmpf0cevxgx':"
+DEBUG:pydub.converter:subprocess output: b'  Duration: 00:00:01.28, bitrate: 1411 kb/s'
+DEBUG:pydub.converter:subprocess output: b'    Stream #0:0: Audio: pcm_s16le ([1][0][0][0] / 0x0001), 44100 Hz, stereo, s16, 1411 kb/s'
+DEBUG:pydub.converter:subprocess output: b'Stream mapping:'
+DEBUG:pydub.converter:subprocess output: b'  Stream #0:0 -> #0:0 (pcm_s16le (native) -> mp3 (libmp3lame))'
+DEBUG:pydub.converter:subprocess output: b'Press [q] to stop, [?] for help'
+DEBUG:pydub.converter:subprocess output: b"Output #0, mp3, to 'C:\\Users\\serge\\AppData\\Local\\Temp\\tmprk8h3h7d':"
+DEBUG:pydub.converter:subprocess output: b'  Metadata:'
+DEBUG:pydub.converter:subprocess output: b'    TSSE            : Lavf58.29.100'
+DEBUG:pydub.converter:subprocess output: b'    Stream #0:0: Audio: mp3 (libmp3lame), 44100 Hz, stereo, s16p'
+DEBUG:pydub.converter:subprocess output: b'    Metadata:'
+DEBUG:pydub.converter:subprocess output: b'      encoder         : Lavc58.54.100 libmp3lame'
+DEBUG:pydub.converter:subprocess output: b'size=      21kB time=00:00:01.28 bitrate= 132.1kbits/s speed=69.6x'
+DEBUG:pydub.converter:subprocess output: b'video:0kB audio:20kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 1.210700%'
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): speech.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://speech.googleapis.com:443 "POST /v1/speech:recognize?key=AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA HTTP/1.1" 200 None
+DEBUG:root:User utterance: exit
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
+DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
+DEBUG:root:Matched command: EXIT
