@@ -7,39 +7,24 @@ A demo of VCF integration into the Google Image Search library.
 
 from google_images_search_vc import GoogleImagesSearch
 from os.path import dirname
-import sys
-import subprocess
 import webbrowser
-from enum import Enum
 
-API_KEY = "YOUR_API_KEY"
-ENGINE_ID = "YOUR_ENGINE_ID"
-
-# Default image viewer for different platforms
-IMG_VIEWER = {
-    'linux': 'xdg-open',
-    'win32': 'explorer',
-    'darwin': 'open'
-}
-
-class DisplayMode(Enum):
-    WEB = 0,
-    FILE = 1
+API_KEY = "YOUR_KEY"
+ENGINE_ID = "YOUR_ID"
 
 
-def display_results(gis: GoogleImagesSearch, mode: DisplayMode):
+def display_results(gis: GoogleImagesSearch):
     """
     Show the outcome of the search to the user.
     :param gis: The GoogleImageSearch object with results populated.
-    :param mode: Display results in the web browser of file explorer?
     :return:
     """
     for image in gis.results():
-        if mode is DisplayMode.WEB:
+        if image.url:
+            # If the result has a URL, then view it in a browser
             webbrowser.open(image.url, new=2)
-        elif mode is DisplayMode.FILE:
-            viewer = IMG_VIEWER[sys.platform]
-            subprocess.run([viewer, image.path])
+        else:
+            raise ValueError(f'No URL found for image {image}')
 
 
 def run(enable_vc: bool = False):
@@ -53,17 +38,17 @@ def run(enable_vc: bool = False):
     print('Commands:\n'
           '\tShow me <query>\t\tFinds a set of images matching the query\n'
           '\tDownload <query>\tDownloads a set of images matching the query to the demo directory\n'
-          '\tCTRL-D\t\t\t\tExit')
+          '\tCTRL-C\t\t\t\tExit')
 
     gis = GoogleImagesSearch(API_KEY, ENGINE_ID)
     search_params = {  # A set of default parameters.
         'q': '',
-        'num': 5,
-        'safe': 'high',
+        'num': 3,
+        'safe': 'off',
         'fileType': 'jpg',
         'imgType': 'photo',
         'imgSize': 'LARGE',
-        'imgDominantColor': 'black'
+        'imgDominantColor': 'white'
     }
     current_dir = dirname(__file__)
 
@@ -74,7 +59,7 @@ def run(enable_vc: bool = False):
             command = ''
             try:
                 command = input()
-            except EOFError:
+            except (EOFError, KeyboardInterrupt):
                 print('Shutting down...')
                 exit(0)
 
@@ -88,18 +73,24 @@ def run(enable_vc: bool = False):
 
             query = ' '.join(tokens[2:] if tokens[0] == 'show' else tokens[1:])
             search_params['q'] = query
+            dir_path = None if tokens[0] == 'show' else current_dir
 
-            if tokens[0] == 'show':
-                gis.search(search_params, use_vc=False)
-                display_results(gis, DisplayMode.WEB)
-            else:
-                # 'download'
-                gis.search(search_params, path_to_dir=current_dir, use_vc=False)
-                display_results(gis, DisplayMode.FILE)
+            # Execute the search.
+            gis.search(search_params, path_to_dir=dir_path, use_vc=False)
+            display_results(gis)
 
         else:
             # If VC is enabled, then the library will handle everything. Provide just the loop and result display.
-            # TODO: Implement
-            gis.search(search_params, use_vc=True)
+            while True:
+                input('Press ENTER to issue next command.')
+                result = gis.search(search_params, use_vc=True)
+                if result is not None:
+                    if not result[0]:
+                        print(f'\nYou said: {result[1]}\nCommand not recognized. ')
+                        continue
+                break
+            display_results(gis)
+
+
 
 
