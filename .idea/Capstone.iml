@@ -5,11 +5,11 @@
       <sourceFolder url="file://$MODULE_DIR$/framework/speech_recognition" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tic_tact_toe" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/integration" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/framework/semantic_tools" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/framework/tests" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/framework/command_dispatch" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/integration_examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/integration_examples/demos" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/framework/semantic_tools" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/battleship" />
       <excludeFolder url="file://$MODULE_DIR$/tic_tact_toe/command_templates" />
     </content>

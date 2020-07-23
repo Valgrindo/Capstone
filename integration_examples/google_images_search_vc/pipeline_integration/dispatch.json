@@ -1,0 +1,19 @@
+{
+  "templates": [
+    "commands.xml"
+  ],
+  "commands": [
+    {
+      "name": "SHOW_QUERY",
+      "type": "GET",
+      "args": ["action"],
+      "groups": ["query"]
+    },
+    {
+      "name": "DOWNLOAD_QUERY",
+      "type": "GET",
+      "args": ["action"],
+      "groups": ["query"]
+    }
+  ]
+}

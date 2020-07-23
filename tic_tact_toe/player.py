@@ -44,7 +44,7 @@ class Player:
         print(f'> Move for {self}. Press and hold SPACE to record when ready.')
         while True:
             print('Awaiting command...')
-            success, utt, move_data = self.pipeline.listen(until=Until.press_and_release('space'))
+            success, utt, (move_data, _) = self.pipeline.listen(until=Until.press_and_release('space'))
             print(f'\n\tYou said: {utt}')
             if not success:
                 print(f'\tYour command was not recognized. Please, try again.')

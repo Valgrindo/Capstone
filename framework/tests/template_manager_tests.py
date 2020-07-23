@@ -14,8 +14,8 @@ from math import floor
 from enum import Enum
 from json import loads
 
-from template_manager import TemplateManager
-from lf_parser import TripsAPI
+from framework.semantic_tools.template_manager import TemplateManager
+from framework.semantic_tools.lf_parser import TripsAPI
 
 
 class TestMode(Enum):

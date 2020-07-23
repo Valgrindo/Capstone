@@ -21,10 +21,9 @@ from queue import Queue
 from collections import namedtuple
 from logging import debug
 from os.path import dirname, join
-from until import Until, RecordStatus
 
+from framework.speech_recognition.until import Until, RecordStatus
 from google.cloud.speech_v1p1beta1 import enums
-
 
 import soundfile as sf
 import sounddevice as sd

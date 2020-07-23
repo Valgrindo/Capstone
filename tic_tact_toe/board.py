@@ -98,16 +98,14 @@ class Board:
         horizontals, verticals, diagonals = self._get_lines()
 
         all_candidates = horizontals + verticals + diagonals
-        tie = False
+        tie = all(all(c) for c in all_candidates)
+        if tie:
+            return GameStatus.TIE
+
         for candidate in all_candidates:
-            if candidate is None:
-                tie = True
             if candidate[0] is not None and candidate.count(candidate[0]) == len(candidate):
                 # Row is all the same symbol
                 return GameStatus.WIN
-
-        if tie:
-            return GameStatus.TIE
 
         return GameStatus.UNDECIDED
 

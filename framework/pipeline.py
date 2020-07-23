@@ -8,7 +8,8 @@ This is the only file that needs to be accessed by (and imported into) the host 
 CS 788.01 Master's Capstone Project
 """
 
-from os.path import isfile
+from os.path import isfile, isdir, join, dirname
+from os import getcwd, chdir
 from typing import *
 import json
 import argparse
@@ -18,10 +19,14 @@ import datetime
 from logging import debug
 from importlib import import_module
 
-from template_manager import TemplateManager
-from lf_parser import TripsAPI
-from command_dispatcher import CommandDispatcher, MappingType
-from speech_recognizer import SpeechTranscriber, Until
+#from .semantic_tools.template_manager import TemplateManager
+from framework.semantic_tools.template_manager import TemplateManager
+#from lf_parser import TripsAPI
+from framework.semantic_tools.lf_parser import TripsAPI
+#from command_dispatcher import CommandDispatcher, MappingType
+from framework.command_dispatch.command_dispatcher import CommandDispatcher, MappingType
+#from speech_recognizer import SpeechTranscriber, Until
+from framework.speech_recognition.speech_recognizer import SpeechTranscriber, Until
 
 import logging
 from logging import debug
@@ -89,7 +94,7 @@ class Pipeline:
             """
             # TODO: Since this instance is shared in the program, is there ANY point in spawning a thread
             #  for performance?
-            result = None
+            result = None, None
             success = False
             utterance = None
             try:
@@ -158,13 +163,25 @@ def validate_framework_state(config: Dict[str, str], log_output=True) -> bool:
             raise ValueError(f'\tMissing required {key} configuration key.')
         out_fn(f'+\tRequired key {key}')
 
+    # Verify that the template and dispatch libraries are valid.
+    work_dir = getcwd()
+    t_lib = join(work_dir, config[CONF_TEMPLATES])
+    if not isfile(t_lib) and not isdir(t_lib):
+        raise ValueError(f'\tTemplate library file/directory {t_lib} not found.')
+    out_fn(f'+\tTemplate library {t_lib}')
+
+    dispatch_lib = join(work_dir, config[CONF_DISPATCH])
+    if not isfile(dispatch_lib):
+        raise ValueError(f'\tTemplate library file/directory {dispatch_lib} not found.')
+    out_fn(f'+\tDispatch library {dispatch_lib}')
+
     try:
         section('PIPELINE STAGES')
         sr = SpeechTranscriber()  # The act of instantiating this validates everything related to the transcriber.
         out_fn(f'+\t Speech Transcriber')
-        tm = TemplateManager(config[CONF_TEMPLATES])
+        tm = TemplateManager(t_lib)
         out_fn(f'+\t Template Manager')
-        cd = CommandDispatcher(config[CONF_DISPATCH])
+        cd = CommandDispatcher(dispatch_lib)
         out_fn(f'+\t Command Dispatcher')
 
         section('COMMANDS')
@@ -177,10 +194,16 @@ def validate_framework_state(config: Dict[str, str], log_output=True) -> bool:
             if desc.name not in tm.command_signatures:
                 raise ValueError(f'No command template named {desc.name}')
 
-            # 2) Binds the parameters specified in the mapping.
-            for arg in desc.args:
-                if arg not in tm.command_signatures[desc.name]:
-                    raise ValueError(f'Command template {desc.name} does not map argument "{arg}".')
+            # 2) Binds the parameters and groups specified in the mapping, if they exist:
+            signatures = tm.command_signatures[desc.name]
+            if hasattr(desc, 'args'):
+                for arg in desc.args:
+                    if arg not in signatures[0]:
+                        raise ValueError(f'Command template {desc.name} does not map argument "{arg}".')
+            if hasattr(desc, 'groups'):
+                for group in desc.groups:
+                    if group not in signatures[1]:
+                        raise ValueError(f'Command template {desc.name} does not map group "{group}".')
 
             # If this is a get command, then all requirements are satisfied.
             if desc.type is MappingType.GET:
@@ -273,6 +296,10 @@ if __name__ == '__main__':
     try:
         with open(args.config, 'r') as fp:
             conf_obj = json.load(fp)
+
+        # To emulate the environment of a real run, switch the CWD to the parent of the provided config file.
+        parent_dir = dirname(args.config)
+        chdir(parent_dir)
 
         framework_state = validate_framework_state(conf_obj, log_output=False)
     except json.decoder.JSONDecodeError as de:

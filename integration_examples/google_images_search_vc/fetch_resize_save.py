@@ -7,6 +7,11 @@ from resizeimage import resizeimage
 
 from .google_api import GoogleCustomSearch
 
+from framework import Pipeline, Until  # VCF import
+from os.path import dirname
+from os import chdir, getcwd
+import uuid
+
 
 IMAGES_NUM_LIMIT = 10
 
@@ -46,6 +51,10 @@ class FetchResizeSave(object):
                 self._progress = True
                 self._stdscr = curses.initscr()
                 self._report_progress = self.__report_progress
+
+        # Additional setup required for VCF
+        chdir(dirname(__file__))
+        self._pipeline = Pipeline.get_pipeline()
 
     def _set_data(self, search_params=None, path_to_dir=False,
                   width=None, height=None, cache_discovery=True):
@@ -87,6 +96,24 @@ class FetchResizeSave(object):
         :param use_vc: Use Voice Controls?
         :return: None
         """
+        if use_vc:
+            # If Voice Controls are enabled, the inputs to the function may be incomplete.
+            # Issue a listen for a SEARCH_QUERY "GET" command to determine:
+            # 1) The content of the search query
+            # 2) Whether to show or download the image.
+            print('Press and hold SPACE to record command.')
+            success, utt, (args, groups) = self._pipeline.listen(Until.press_and_release('space'))
+            if not success:
+                return success, utt
+            print(f'\nUtterance: {utt}\nRecognized command: {args["action"]}')
+
+            # Use the data from the user.
+            search_params['q'] = groups['query']
+            if args['action'].lower() == 'show':
+                path_to_dir = None
+            else:
+                tmp_dir_name = str(uuid.uuid1())
+                path_to_dir = dirname(__file__) + '\\' + tmp_dir_name
 
         if not self._search_again:
             self._set_data(

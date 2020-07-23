@@ -10,7 +10,7 @@ from typing import *
 from os.path import isfile, join, isdir
 from os import listdir
 
-from logical_form import LogicalForm, CommandTemplateError
+from framework.semantic_tools.logical_form import LogicalForm, CommandTemplateError
 from bs4 import BeautifulSoup, Tag
 
 
@@ -33,9 +33,9 @@ class Command:
         self.groups = {}  # type: Dict[str, str]
 
     @property
-    def signature(self) -> Optional[Tuple[str, Set[str]]]:
+    def signature(self) -> Optional[Tuple[str, Set[str], Set[str]]]:
         """
-        Get this Command's signature -- a tuple of the name and bound parameter names.
+        Get this Command's signature -- a tuple of the name, bound parameter names, and bound groups.
         :return:
         """
         # Return nothing for uninitialized commands.
@@ -43,10 +43,12 @@ class Command:
             return None
 
         params = set()
+        groups = set()
         for template in self.template:
             params = params.union(template.bindings)
+            groups = groups.union(template.groups)
 
-        return self.name, params
+        return self.name, params, groups
 
     def __str__(self):
         return f'<command {self.name} -> {self.bound_params}/>'
@@ -141,12 +143,12 @@ class TemplateManager:
                     lf.resolve(self._unresolved_comps)
 
     @property
-    def command_signatures(self) -> Dict[str, Set[str]]:
+    def command_signatures(self) -> Dict[str, Tuple[Set[str], Set[str]]]:
         """
         Iterate over a list of command names and bound arguments within this manager.
         :return:
         """
-        return {comm.name: comm.signature[1] for comm in self._parsed_commands.values()}
+        return {comm.name: (comm.signature[1], comm.signature[2]) for comm in self._parsed_commands.values()}
 
     def match(self, lf: LogicalForm) -> Optional[Command]:
         """

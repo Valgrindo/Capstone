@@ -1,0 +1,35 @@
+<!-- Command templates for Google Image Search -->
+<commands>
+
+<!-- A command for viewing a set of results from the web.-->
+<command name="SHOW_QUERY">
+    <component indicator="SPEECHACT" type="SA_REQUEST">
+        <role name="CONTENT">
+            <component indicator="F" word="SHOW" map_param="action">
+                <role name="AGENT1">
+                    ME
+                </role>
+                <role name="NEUTRAL">
+                    <!-- Match anything as the search query. -->
+                    <component fuzzy="True" group="query"/>
+                </role>
+            </component>
+        </role>
+    </component>
+</command>
+
+<!-- A command for viewing a set of results from downloaded files.-->
+<command name="DOWNLOAD_QUERY">
+    <component indicator="SPEECHACT" type="SA_REQUEST">
+        <role name="CONTENT">
+            <component indicator="F" word="DOWNLOAD" map_param="action">
+                <role name="AFFECTED">
+                    <!-- Match anything as the search query. -->
+                    <component fuzzy="True" group="query"/>
+                </role>
+            </component>
+        </role>
+    </component>
+</command>
+
+</commands>

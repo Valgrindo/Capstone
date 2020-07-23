@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 from typing import *
 from enum import Enum
 
-from template_manager import Command
+from framework.semantic_tools.template_manager import Command
 
 TEMPLATE_KEY = "templates"  # JSON dictionary key for template source listing
 COMMAND_KEY = "commands"    # JSON dictionary key for mapping description listing
@@ -65,14 +65,21 @@ class CommandDispatcher:
             self.type = MappingType.parse(data["type"])
 
             if self.type is MappingType.GET:
-                # At least one argument is required
-                if "args" not in data:
-                    raise CommandDispatcher.DispatchMapException('Missing required "args" key for GET mapping.')
+                # At least one argument or group is required
+                if "args" not in data and "groups" not in data:
+                    raise CommandDispatcher.DispatchMapException('Either "args" or "groups" key required for GET mapping.')
 
-                if not data["args"]:
+                if "args" in data and not data["args"]:
                     raise CommandDispatcher.DispatchMapException('Empty arguments set in a GET mapping.')
 
-                self.args = data["args"]
+                if "groups" in data and not data["groups"]:
+                    raise CommandDispatcher.DispatchMapException('Empty groups set in a GET mapping.')
+
+                if "args" in data:
+                    self.args = data["args"]
+                if "groups" in data:
+                    self.groups = data["groups"]
+
             elif self.type is MappingType.INVOKE:
                 for field in INVOKE_FIELDS:
                     if field not in data:
@@ -80,6 +87,7 @@ class CommandDispatcher:
                     setattr(self, field, data[field])  # Dynamically create the relevant fields
 
                 self.args = [] if "args" not in data else data["args"]
+                self.groups = [] if "groups" not in data else data["groups"]
                 self.class_ = None if "class" not in data else data["class"]
             else:
                 raise CommandDispatcher.DispatchMapException(f'Invalid command type {data["type"]}')
@@ -87,12 +95,14 @@ class CommandDispatcher:
         def __str__(self):
             if self.type is MappingType.GET:
                 return f'name: {self.name}\n' + \
-                        f'\targs: {self.args}'
+                        f'\targs: {self.args}\n' + \
+                        f'\tgroups: {self.groups}'
             elif self.type is MappingType.INVOKE:
                 return f'name: {self.name}\n' + \
                         f'\targs: {self.args}\n' + \
+                        f'\tgroups: {self.groups}\n' + \
                         f'\tmodule: {self.module}\n' + \
-                        f'\tclass: {self.class_}' + \
+                        f'\tclass: {self.class_}\n' + \
                         f'\tmethod: {self.method}'
             else:
                 return 'ERROR'
@@ -104,9 +114,13 @@ class CommandDispatcher:
         """
         self._mappings = {}  # type: Dict[str, CommandDispatcher.CommandMapping]
 
-        fp = open(dispatch_map, 'r')
-        file_data = json.load(fp)
-        fp.close()
+        file_data = None
+        try:
+            fp = open(dispatch_map, 'r')
+            file_data = json.load(fp)
+            fp.close()
+        except json.decoder.JSONDecodeError as de:
+            raise ValueError(f'Malformed dispatch mapping file {dispatch_map}: {de}')
 
         context_path = split(dispatch_map)[0]  # The context for files referenced in the map
 
@@ -182,12 +196,13 @@ class CommandDispatcher:
             else:
                 continue
 
-    def dispatch(self, command: Command, modules: Dict[str, Any] = None) -> Union[Dict[str, str], Optional[Any]]:
+    def dispatch(self, command: Command, modules: Dict[str, Any] = None) -> \
+            Union[Tuple[Dict[str, str], Dict[str, str]], Optional[Any]]:
         """
         Given a command, execute it using stored descriptions.
         :param command: A Command instance.
         :param modules: A dictionary of loaded modules.
-        :return: The output of the invoked function call if there was any OR the GET mapping.
+        :return: The output of the invoked function call if there was any OR the GET mapping arguments and groups.
         """
         # Check that the command is actually mapped. This should never happen due to startup validation,
         # but defencive programming is good.
@@ -197,7 +212,7 @@ class CommandDispatcher:
         desc = self._mappings[command.name]
         if desc.type is MappingType.GET:
             # A GET command needs no invocation, simply return the bound parameters.
-            return command.bound_params
+            return command.bound_params, command.groups
 
         if desc.module not in modules:
             raise ValueError(f'Required module {desc.module} not found.')

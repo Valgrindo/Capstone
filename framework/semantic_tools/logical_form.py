@@ -77,7 +77,24 @@ class LogicalForm:
                     for comp in rcs:
                         result = result.union(comp.bound_params)
 
-            return set(result)
+            return result
+
+        @property
+        def groups(self) -> Set[str]:
+            """
+            Get the set of all groups bound by this Component and all its children.
+            :return:
+            """
+            result = set()
+            if self.group:
+                result.add(self.group)
+
+            for rg in self.roles:
+                for rcs in rg.values():
+                    for comp in rcs:
+                        result = result.union(comp.groups)
+
+            return result
 
         def _move(self, other):
             """
@@ -200,6 +217,14 @@ class LogicalForm:
         :return:
         """
         return self._root.bound_params
+
+    @property
+    def groups(self) -> Set[str]:
+        """
+        Get the set of groups bound by this LogicalForm.
+        :return:
+        """
+        return self._root.groups
 
     @staticmethod
     def _iterate(cmp: Component):

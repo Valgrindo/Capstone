@@ -1,4 +1,4 @@
 {
-  "template_lib": "..\\tic_tact_toe\\command_templates",
-  "dispatch_map": "..\\tic_tact_toe\\game_dispatch.json"
+  "template_lib": "command_templates",
+  "dispatch_map": "game_dispatch.json"
 }

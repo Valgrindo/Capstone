@@ -30,17 +30,17 @@ def main():
     players = None
     while True:
         print(f'> Play single-player or multi-player?\n{AWAIT_COMMAND}')
-        success, utt, result = pipeline.listen(Until.press_and_release('space'), for_command='GAME_MODE')
+        success, utt, (args, _) = pipeline.listen(Until.press_and_release('space'), for_command='GAME_MODE')
         print(f'\nYou said: {utt}')
         if not success:
             print(f'Command not recognized.')
             continue
-        if result is None or 'number' not in result:
+        if args is None or 'number' not in args:
             print('There was an error processing your command. Try again.')
             continue
 
         players = [Player(name='Player 1', piece=GamePiece.CROSS)]
-        if result['number'] == 'SINGLE':
+        if args['number'] == 'SINGLE':
             print('You chose single-player!')
             players.append(Bot(name='AI', piece=GamePiece.CIRCLE))
         else:
@@ -67,6 +67,7 @@ def main():
             print(f'Congratulations! {curr_player} is a winner!')
             break
         elif status == GameStatus.TIE:
+            print(board)
             print('The game is a tie!')
             break
         turn = (turn + 1) % 2

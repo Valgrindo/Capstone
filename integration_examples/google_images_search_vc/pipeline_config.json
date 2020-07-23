@@ -1,0 +1,4 @@
+{
+  "template_lib": "pipeline_integration\\commands.xml",
+  "dispatch_map": "pipeline_integration\\dispatch.json"
+}
