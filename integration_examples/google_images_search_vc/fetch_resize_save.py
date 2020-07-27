@@ -9,7 +9,7 @@ from .google_api import GoogleCustomSearch
 
 from framework import Pipeline, Until  # VCF import
 from os.path import dirname
-from os import chdir, getcwd
+from os import chdir
 import uuid
 
 

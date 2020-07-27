@@ -16,32 +16,27 @@ import argparse
 import importlib.util
 import inspect
 import datetime
-from logging import debug
 from importlib import import_module
 
-#from .semantic_tools.template_manager import TemplateManager
 from framework.semantic_tools.template_manager import TemplateManager
-#from lf_parser import TripsAPI
 from framework.semantic_tools.lf_parser import TripsAPI
-#from command_dispatcher import CommandDispatcher, MappingType
 from framework.command_dispatch.command_dispatcher import CommandDispatcher, MappingType
-#from speech_recognizer import SpeechTranscriber, Until
-from framework.speech_recognition.speech_recognizer import SpeechTranscriber, Until
+from framework.speech_recognition.speech_recognizer import SpeechTranscriber
+from framework.speech_recognition.until import Until
 
 import logging
 from logging import debug
+
 LOG_FILENAME = 'pipeline.log'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 
 CONFIGURATION = "pipeline_config.json"  # Expected name and location of the config file.
 CONF_TEMPLATES = "template_lib"
 CONF_DISPATCH = "dispatch_map"
-TUTORIAL = "tutorial.txt"
 
 USAGE = """pipeline.py [-h] [-v]
 
 optional arguments:
- -h, --help         Show a brief tutorial on framework usage.
  -v, --validate     Validate the current state of framework configuration.
 """
 
@@ -269,8 +264,6 @@ if __name__ == '__main__':
     arg_parser.add_argument("config", help="path to pipeline configuration file.")
     arg_parser.add_argument("-v", "--validate", action="store_true",
                             help="Validate all framework components.")
-    arg_parser.add_argument("-h", "--help", action="store_true",
-                            help="Display a simple tutorial.")
     args = arg_parser.parse_args()
 
     # If neither flag was specified, there is nothing to do.
@@ -278,12 +271,6 @@ if __name__ == '__main__':
         arg_parser.print_usage()
         print('\nVoice Control Integration Pipeline\n',
               'Copyright © 2020 by Sergey Goldobin')
-        exit(0)
-
-    # TODO: Is there a way to prevent the file from tampering without baking it into the code?
-    if args.help:
-        with open(TUTORIAL, 'r') as fp:
-            print(fp.read())
         exit(0)
 
     # Validation was selected, proceed.

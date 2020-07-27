@@ -8,7 +8,6 @@ and convert it to text.
 
 CS 788.01 MS Capstone Project
 """
-from typing import *
 import os
 import os.path
 from io import open
@@ -23,7 +22,7 @@ from logging import debug
 from os.path import dirname, join
 
 from framework.speech_recognition.until import Until, RecordStatus
-from google.cloud.speech_v1p1beta1 import enums
+from google.cloud.speech_v1 import enums
 
 import soundfile as sf
 import sounddevice as sd
