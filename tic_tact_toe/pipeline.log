@@ -847,3 +847,82 @@ DEBUG:root:User utterance: top Center
 DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
 DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
 DEBUG:root:Matched command: GET_MOVE_LOC
+DEBUG:root:
+2020-07-27 13:42:35.799347
+DEBUG:root:
+=========================
+FRAMEWORK CONFIGURATION
+=========================
+DEBUG:root:+	Required key template_lib
+DEBUG:root:+	Required key dispatch_map
+DEBUG:root:+	Template library D:\Programming\Capstone\tic_tact_toe\command_templates
+DEBUG:root:+	Dispatch library D:\Programming\Capstone\tic_tact_toe\game_dispatch.json
+DEBUG:root:
+=========================
+PIPELINE STAGES
+=========================
+DEBUG:root:+	 Speech Transcriber
+DEBUG:root:+	 Template Manager
+DEBUG:root:+	 Command Dispatcher
+DEBUG:root:
+=========================
+COMMANDS
+=========================
+DEBUG:root:+	 Command: REPLAY_GAME
+DEBUG:root:+	 Command: GET_MOVE_LOC
+DEBUG:root:+	 Command: GAME_MODE
+DEBUG:root:+	 Command: EXIT
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:Recording over!
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): speech.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://speech.googleapis.com:443 "POST /v1/speech:recognize?key=AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA HTTP/1.1" 200 None
+DEBUG:root:User utterance: single player
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
+DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
+DEBUG:root:Matched command: GAME_MODE
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:Recording over!
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): speech.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://speech.googleapis.com:443 "POST /v1/speech:recognize?key=AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA HTTP/1.1" 200 None
+DEBUG:root:User utterance: top right
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
+DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
+DEBUG:root:Matched command: GET_MOVE_LOC
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:Recording over!
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): speech.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://speech.googleapis.com:443 "POST /v1/speech:recognize?key=AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA HTTP/1.1" 200 None
+DEBUG:root:User utterance: bottom center
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
+DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
+DEBUG:root:Matched command: GET_MOVE_LOC
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:Recording over!
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): speech.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://speech.googleapis.com:443 "POST /v1/speech:recognize?key=AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA HTTP/1.1" 200 None
+DEBUG:root:User utterance: again
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
+DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
+DEBUG:root:Pipeline error: 'NoneType' object has no attribute 'name'
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:Recording over!
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): speech.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://speech.googleapis.com:443 "POST /v1/speech:recognize?key=AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA HTTP/1.1" 200 None
+DEBUG:root:User utterance: replay
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
+DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
+DEBUG:root:Pipeline error: 'NoneType' object has no attribute 'name'
+DEBUG:root:Awaiting recording.
+DEBUG:root:Begin recording.
+DEBUG:root:Recording over!
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): speech.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://speech.googleapis.com:443 "POST /v1/speech:recognize?key=AIzaSyATg8YISwxaNj19DuXKDdjktuHghWImUtA HTTP/1.1" 200 None
+DEBUG:root:User utterance: exit
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): trips.ihmc.us:80
+DEBUG:urllib3.connectionpool:http://trips.ihmc.us:80 "POST /parser/cgi/parse HTTP/1.1" 200 None
+DEBUG:root:Matched command: EXIT

@@ -10,7 +10,7 @@ Used as "target practice" for the VC integration framework.
 from board import Board, GamePiece, GameStatus
 from player import Player, Bot
 
-from framework import Pipeline, Until
+from vcf.framework import Pipeline, Until
 
 AWAIT_COMMAND = "Awaiting command..."
 
