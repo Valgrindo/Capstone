@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="voice-control-framework-Valgrindo",
-    version="0.0b3",
+    version="0.0b4",
     author="Sergey Goldobin",
     author_email="sergejgoldobin081096@gmail.com",
     description="Customizable voice control integration framework.",
@@ -19,7 +19,9 @@ setuptools.setup(
         'keyboard',             # Until module support
         'google-cloud-speech',  # Used in speech recognition
         'soundfile',            # """
-        'sounddevice'           # """
+        'sounddevice',          # """
+        'google-images-search'  # Demo package
+
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
