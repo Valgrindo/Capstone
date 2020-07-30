@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="voice-control-framework-Valgrindo",
-    version="0.0b1",
+    version="0.0b2",
     author="Sergey Goldobin",
     author_email="sergejgoldobin081096@gmail.com",
     description="Customizable voice control integration framework.",
