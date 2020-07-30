@@ -1,2 +1,3 @@
 include framework/speech_recognition/configuration.json
-include framework/tests/*
+include framework/tests/tm_match_data/*
+include framework/tests/tm_test_data/*
