@@ -9,8 +9,8 @@ from google_images_search_vc import GoogleImagesSearch
 from os.path import dirname
 import webbrowser
 
-API_KEY = "YOUR_KEY"
-ENGINE_ID = "YOUR_ID"
+API_KEY = ""
+ENGINE_ID = ""
 
 
 def display_results(gis: GoogleImagesSearch):
@@ -39,6 +39,11 @@ def run(enable_vc: bool = False):
           '\tShow me <query>\t\tFinds a set of images matching the query\n'
           '\tDownload <query>\tDownloads a set of images matching the query to the demo directory\n'
           '\tCTRL-C\t\t\t\tExit')
+
+    if not API_KEY:
+        raise ValueError('Missing API_KEY for Google Image Search API.')
+    if not ENGINE_ID:
+        raise ValueError('Missing ENGINE_ID for Google Image Search API.')
 
     gis = GoogleImagesSearch(API_KEY, ENGINE_ID)
     search_params = {  # A set of default parameters.
