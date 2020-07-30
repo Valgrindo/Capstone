@@ -1,1 +1,2 @@
 include framework/speech_recognition/configuration.json
+include framework/tests/*
